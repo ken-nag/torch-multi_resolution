@@ -41,13 +41,21 @@ class UNetRunner():
     def _preprocess(self, mixture, true):
         mix_spec = self.stft_module.stft(mixture, pad=True)
         mix_phase = mix_spec[:,:,1]
+        
+        norm_time = time.time()
         mix_amp_spec = taF.complex_norm(mix_spec)
+        print('norm_time:', time.time() - norm_time)
+        
         mix_amp_spec = mix_amp_spec[:,1:,:]
         mix_mag_spec = torch.log10(mix_amp_spec + self.eps)
         mix_mag_spec = mix_mag_spec[:,1:,:]
         
         true_spec = self.stft_module.stft(true, pad=True)
+        
+        norm_time2 = time.time()
         true_amp_spec = taF.complex_norm(true_spec)
+        print('norm2_time:', time.time() - norm_time2)
+        
         true_amp_spec = true_amp_spec[:,1:,:]
         
         return mix_mag_spec, true_amp_spec, mix_phase, mix_amp_spec
@@ -60,14 +68,21 @@ class UNetRunner():
         for i, (mixture, _, _, _, vocals) in enumerate(data_loader):
             mixture = mixture.to(self.dtype).to(self.device)
             true = vocals.to(self.dtype).to(self.device)
-            mix_mag_spec, true_amp_spec, _, mix_amp_spec = self._preprocess(mixture, true)
             
+            pre_pro_time = time.time()
+            mix_mag_spec, true_amp_spec, _, mix_amp_spec = self._preprocess(mixture, true)
+            print('preproces_time:', time.time() - pre_pro_time)
+            
+            est_time = time.time()
             model.zero_grad()
             est_mask = model(mix_mag_spec.unsqueeze(1))
             est_source = mix_amp_spec.unsqueeze(1) * est_mask
+            print('est_time:', time.time() - est_time)
             
             if mode == 'train' or mode == 'validation':
+                loss_time = time.time()
                 loss = 10 * criterion(est_source, true_amp_spec)
+                print('loss_time:', time.time() - loss_time)
                 running_loss += loss.data
                 if mode == 'train':
                     loss.backward()
@@ -93,11 +108,13 @@ class UNetRunner():
             #    valid_loss = np.append(valid_loss, tmp_valid_loss.cpu().clone().numpy())
                  
             if (epoch + 1) % 10 == 0:
+                plot_time = time.time()
+                show_TF_domein_result(train_loss, mix_amp_spec[0,:,:], est_mask[0,0,:,:], est_source[0,0,:,:], true_amp_spec[0,:,:])
+                print('plot_time:', time.time() - plot_time)
                 torch.save(self.model.state_dict(), self.save_path + 'u_net{0}.ckpt'.format(epoch + 1))
             
             end = time.time()
             print('----excute time: {0}'.format(end - start))
-            show_TF_domein_result(train_loss, mix_amp_spec[0,:,:], est_mask[0,0,:,:], est_source[0,0,:,:], true_amp_spec[0,:,:])
                         
 if __name__ == '__main__':
     from configs.train_dsd_unet_config_1 import cfg as train_cfg

@@ -50,6 +50,10 @@ class UNet_pp_Runner():
         mix_mag_spec = torch.log10(mix_amp_spec + self.eps)
         mix_mag_spec = mix_mag_spec[:,1:,:]
         
+        true_spec = self.stft_module.stft(true, pad=True)
+        true_amp_spec = taF.complex_norm(true_spec)
+        true_amp_spec = true_amp_spec[:,1:,:]
+        
         #ex1
         ex1_mix_spec = self.stft_module_ex1.stft(mixture, pad=True)
         ex1_mix_amp_spec = taF.complex_norm(ex1_mix_spec)
@@ -64,10 +68,6 @@ class UNet_pp_Runner():
         batch_size, f_size, t_size = ex2_mix_mag_spec.shape
         pad_ex2_mix_mag_spec = torch.zeros((batch_size, f_size, 128)).to(self.dtype).to(self.device)
         pad_ex2_mix_mag_spec[:,:1024,:127] = ex2_mix_mag_spec[:,:,:]
-        
-        true_spec = self.stft_module.stft(true, pad=True)
-        true_amp_spec = taF.complex_norm(true_spec)
-        true_amp_spec = true_amp_spec[:,1:,:]
         
         return mix_mag_spec, ex1_mix_mag_spec, pad_ex2_mix_mag_spec, true_amp_spec, mix_phase, mix_amp_spec
         
@@ -117,11 +117,12 @@ class UNet_pp_Runner():
             #    valid_loss = np.append(valid_loss, tmp_valid_loss.cpu().clone().numpy())
                  
             if (epoch + 1) % 10 == 0:
+                show_TF_domein_result(train_loss, mix_amp_spec[0,:,:], est_mask[0,0,:,:], est_source[0,0,:,:], true_amp_spec[0,:,:])
                 torch.save(self.model.state_dict(), self.save_path + 'u_net{0}.ckpt'.format(epoch + 1))
             
             end = time.time()
             print('----excute time: {0}'.format(end - start))
-            show_TF_domein_result(train_loss, mix_amp_spec[0,:,:], est_mask[0,0,:,:], est_source[0,0,:,:], true_amp_spec[0,:,:])
+           
                         
 if __name__ == '__main__':
     from configs.train_dsd_unet_pp_config_1 import cfg as train_cfg
