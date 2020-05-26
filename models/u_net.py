@@ -58,7 +58,7 @@ class UNet(nn.Module):
             prev_output = self.decoders[i+1](torch.cat((prev_output, outputs[-(i+2)]), dim=1))
             
         last_output = self.last_layer(torch.cat((prev_output, outputs[1]), dim=1))
-        est_mask = F.sigmoid(last_output)
+        est_mask = torch.sigmoid(last_output)
         
         return est_mask
         

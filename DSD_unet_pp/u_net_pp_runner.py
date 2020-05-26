@@ -9,7 +9,9 @@ from utils.visualizer import show_TF_domein_result
 import numpy as np
 from utils.stft_module import STFTModule
 import torchaudio.functional as taF
-# %matplotlib inline
+
+from IPython import get_ipython
+get_ipython().run_line_magic('matplotlib', 'inline')
 
 
 class UNet_pp_Runner():
