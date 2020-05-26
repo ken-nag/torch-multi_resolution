@@ -38,7 +38,7 @@ class UNet_pp_Runner():
         self.model = UNet_pp().to(self.device)
         self.criterion = MSE()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
-        self.save_path = 'results/model/train_dsd_u_net_pp_config_1/'
+        self.save_path = 'results/model/train_dsd_unet_pp_config_1/'
         
     def _preprocess(self, mixture, true):
         mix_spec = self.stft_module.stft(mixture, pad=True)
