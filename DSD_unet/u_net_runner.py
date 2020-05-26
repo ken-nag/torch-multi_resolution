@@ -9,13 +9,13 @@ from utils.visualizer import show_TF_domein_result
 import numpy as np
 from utils.stft_module import STFTModule
 import torchaudio.functional as taF
-%matplotlib inline
+# %matplotlib inline
 
 
 class UNetRunner():
     def __init__(self, cfg):
         
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
         self.dtype= torch.float32
         self.eps = 1e-4
         
@@ -99,6 +99,6 @@ class UNetRunner():
             show_TF_domein_result(train_loss, mix_amp_spec[0,:,:], est_mask[0,0,:,:], est_source[0,0,:,:])
                         
 if __name__ == '__main__':
-    from configs.train_dsd_config_1 import cfg as train_cfg
+    from configs.train_dsd_unet_config_1 import cfg as train_cfg
     obj = UNetRunner(train_cfg)
     obj.train()

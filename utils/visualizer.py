@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 
     
 def show_TF_domein_result(loss, mixture, mask, estimate, true, vmin=-60, eps=1e-10):
-    mixture = mixture.detach().clone().numpy()
-    mask = mask.detach().clone().numpy()
-    estimate = estimate.detach().clone().numpy()
-    true = true.detach().clone().numpy()
+    mixture = mixture.detach().clone().cpu().numpy()
+    mask = mask.detach().clone().cpu().numpy()
+    estimate = estimate.detach().clone().cpu().numpy()
+    true = true.detach().clone().cpu().numpy()
     
     vmax = 20*np.log10(np.max(mixture))-10
     vmin += vmax

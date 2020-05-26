@@ -9,7 +9,7 @@ from utils.visualizer import show_TF_domein_result
 import numpy as np
 from utils.stft_module import STFTModule
 import torchaudio.functional as taF
-%matplotlib inline
+# %matplotlib inline
 
 
 class UNet_pp_Runner():

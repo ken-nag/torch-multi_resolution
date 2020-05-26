@@ -18,7 +18,7 @@ class DSDToNpz():
         self.sec = 6
         self.target_fs = 16000
         self.target_len = 16384
-        self.DSD_folder_path = '../data/DSD100subset/Sources/'
+        self.DSD_folder_path = '../data/DSD100/Sources/'
         self.save_folder_path ='../data/DSD100npz/'
         
         self.train_subfolders = glob.glob(self.DSD_folder_path + 'Dev/*')
@@ -58,6 +58,7 @@ class DSDToNpz():
         assert mode == 'train' or mode == 'validation', 'InvalidArgument'
         
         npz_num = self.train_npz_num if mode == 'train' else self.valid_npz_num
+        print('train_subfolders',len(self.train_subfolders))
         num_npz_per_track = npz_num / len(self.train_subfolders) + 1
         
         npz_idx = 0
@@ -142,7 +143,7 @@ class DSDToNpz():
             
 if __name__ == '__main__':
     random.seed(0)
-    obj = DSDToNpz(train_npz_num=20, valid_npz_num=20)
+    obj = DSDToNpz(train_npz_num=20000, valid_npz_num=2000)
     obj.make_train_tracks(mode='train')
-    # obj.make_train_tracks(mode='validation')
-    # obj.make_test_tracks()
+    obj.make_train_tracks(mode='validation')
+    obj.make_test_tracks()
