@@ -95,7 +95,7 @@ class UNet_pp_Runner():
                     loss.backward()
                     self.optimizer.step()
             
-        return (running_loss / (i+1)), est_source, est_mask, mix_amp_spec
+        return (running_loss / (i+1)), est_source, est_mask, mix_amp_spec, true_amp_spec
     
     def train(self):
         train_loss = np.array([])
@@ -106,7 +106,7 @@ class UNet_pp_Runner():
             print('epoch{0}'.format(epoch))
             start = time.time()
             self.model.train()
-            tmp_train_loss, est_source, est_mask, mix_amp_spec = self._run(self.model, self.criterion, self.train_data_loader, self.train_batch_size, mode='train')
+            tmp_train_loss, est_source, est_mask, mix_amp_spec, true_amp_spec = self._run(self.model, self.criterion, self.train_data_loader, self.train_batch_size, mode='train')
             train_loss = np.append(train_loss, tmp_train_loss.cpu().clone().numpy())
             # validation
             # self.model.eval()
@@ -119,7 +119,7 @@ class UNet_pp_Runner():
             
             end = time.time()
             print('----excute time: {0}'.format(end - start))
-            show_TF_domein_result(train_loss, mix_amp_spec[0,:,:], est_mask[0,0,:,:], est_source[0,0,:,:])
+            show_TF_domein_result(train_loss, mix_amp_spec[0,:,:], est_mask[0,0,:,:], est_source[0,0,:,:], true_amp_spec[0,:,:])
                         
 if __name__ == '__main__':
     from configs.train_dsd_unet_pp_config_1 import cfg as train_cfg
