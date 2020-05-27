@@ -35,7 +35,7 @@ class STFTModule():
         frame_num = self._cal_frame_num(sig_len)
         pad_x_len = self.win_length + ((frame_num - 1) * self.hop_length)
         self.pad_len = pad_x_len - sig_len
-        buff = torch.zeros(batch_size, pad_x_len).to(self.dtype).to(self.device)
+        buff = torch.zeros((batch_size, pad_x_len), dtype=self.dtype, device=self.device.type)
         buff[:, :sig_len] = x
         return buff
        

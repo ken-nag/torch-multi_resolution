@@ -66,7 +66,7 @@ class UNet_pp_Runner():
         ex2_mix_mag_spec = torch.log10(ex2_mix_amp_spec + self.eps)
         ex2_mix_mag_spec = ex2_mix_mag_spec[:,1:,:]
         batch_size, f_size, t_size = ex2_mix_mag_spec.shape
-        pad_ex2_mix_mag_spec = torch.zeros((batch_size, f_size, 128)).to(self.dtype).to(self.device)
+        pad_ex2_mix_mag_spec = torch.zeros((batch_size, f_size, 128), dtype=self.dtype, device=self.device)
         pad_ex2_mix_mag_spec[:,:1024,:127] = ex2_mix_mag_spec[:,:,:]
         
         return mix_mag_spec, ex1_mix_mag_spec, pad_ex2_mix_mag_spec, true_amp_spec, mix_phase, mix_amp_spec
@@ -74,7 +74,7 @@ class UNet_pp_Runner():
     def _postporcess(self, x):
         #padding DC Component
         batch_size, channel_size, f_size, t_size = x.shape
-        pad_x = torch.zeros((batch_size, channel_size, 512, t_size)).to(self.dtype).to(self.device)
+        pad_x = torch.zeros((batch_size, channel_size, 512, t_size), dtype=self.dtype, device=self.device)
         pad_x[:,:,1:, :] = x[:,:,:,:]
         return pad_x
         
