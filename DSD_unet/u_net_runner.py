@@ -36,20 +36,21 @@ class UNetRunner():
         self.model = UNet().to(self.device)
         self.criterion = MSE()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
-        self.save_path = 'results/model/train_dsd_config_1/'
+        self.save_path = 'results/model/train_dsd_unet_config_1/'
         
     def _preprocess(self, mixture, true):
-        mix_spec = self.stft_module.stft(mixture, pad=True)
-        mix_phase = mix_spec[:,:,1]
-        
-        mix_amp_spec = taF.complex_norm(mix_spec)
-        mix_amp_spec = mix_amp_spec[:,1:,:]
-        mix_mag_spec = torch.log10(mix_amp_spec + self.eps)
-        mix_mag_spec = mix_mag_spec[:,1:,:]
-        
-        true_spec = self.stft_module.stft(true, pad=True)     
-        true_amp_spec = taF.complex_norm(true_spec)     
-        true_amp_spec = true_amp_spec[:,1:,:]
+        with torch.no_grad():
+            mix_spec = self.stft_module.stft(mixture, pad=True)
+            mix_phase = mix_spec[:,:,1]
+            
+            mix_amp_spec = taF.complex_norm(mix_spec)
+            mix_amp_spec = mix_amp_spec[:,1:,:]
+            mix_mag_spec = torch.log10(mix_amp_spec + self.eps)
+            mix_mag_spec = mix_mag_spec[:,1:,:]
+            
+            true_spec = self.stft_module.stft(true, pad=True)     
+            true_amp_spec = taF.complex_norm(true_spec)     
+            true_amp_spec = true_amp_spec[:,1:,:]
         
         return mix_mag_spec, true_amp_spec, mix_phase, mix_amp_spec
         
