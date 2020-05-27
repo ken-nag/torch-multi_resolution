@@ -42,20 +42,13 @@ class UNetRunner():
         mix_spec = self.stft_module.stft(mixture, pad=True)
         mix_phase = mix_spec[:,:,1]
         
-        norm_time = time.time()
         mix_amp_spec = taF.complex_norm(mix_spec)
-        print('norm_time:', time.time() - norm_time)
-        
         mix_amp_spec = mix_amp_spec[:,1:,:]
         mix_mag_spec = torch.log10(mix_amp_spec + self.eps)
         mix_mag_spec = mix_mag_spec[:,1:,:]
         
-        true_spec = self.stft_module.stft(true, pad=True)
-        
-        norm_time2 = time.time()
-        true_amp_spec = taF.complex_norm(true_spec)
-        print('norm2_time:', time.time() - norm_time2)
-        
+        true_spec = self.stft_module.stft(true, pad=True)     
+        true_amp_spec = taF.complex_norm(true_spec)     
         true_amp_spec = true_amp_spec[:,1:,:]
         
         return mix_mag_spec, true_amp_spec, mix_phase, mix_amp_spec
@@ -71,18 +64,13 @@ class UNetRunner():
             
             pre_pro_time = time.time()
             mix_mag_spec, true_amp_spec, _, mix_amp_spec = self._preprocess(mixture, true)
-            print('preproces_time:', time.time() - pre_pro_time)
             
-            est_time = time.time()
             model.zero_grad()
             est_mask = model(mix_mag_spec.unsqueeze(1))
             est_source = mix_amp_spec.unsqueeze(1) * est_mask
-            print('est_time:', time.time() - est_time)
             
             if mode == 'train' or mode == 'validation':
-                loss_time = time.time()
                 loss = 10 * criterion(est_source, true_amp_spec)
-                print('loss_time:', time.time() - loss_time)
                 running_loss += loss.data
                 if mode == 'train':
                     loss.backward()
