@@ -4,6 +4,7 @@ import time
 sys.path.append('../')
 from models.u_net_pp import UNet_pp
 from data_utils.dsd100_dataset import DSD100Dataset
+from data_utils.data_loader import FastDataLoader
 from utils.loss import MSE
 from utils.visualizer import show_TF_domein_result
 import numpy as np
@@ -35,41 +36,42 @@ class UNet_pp_Runner():
         self.train_dataset = DSD100Dataset(data_num=self.train_data_num, sample_len=self.sample_len, folder_type='train')
         self.valid_dataset = DSD100Dataset(data_num=self.valid_data_num, sample_len=self.sample_len, folder_type='validation')
         
-        self.train_data_loader = torch.utils.data.DataLoader(self.train_dataset, batch_size=self.train_batch_size, shuffle=True)
-        self.valid_data_loader = torch.utils.data.DataLoader(self.valid_dataset, batch_size=self.valid_batch_size, shuffle=True)
+        self.train_data_loader = FastDataLoader(self.train_dataset, batch_size=self.train_batch_size, shuffle=True)
+        self.valid_data_loader = FastDataLoader(self.valid_dataset, batch_size=self.valid_batch_size, shuffle=True)
         self.model = UNet_pp().to(self.device)
         self.criterion = MSE()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
         self.save_path = 'results/model/train_dsd_unet_pp_config_1/'
         
     def _preprocess(self, mixture, true):
-        mix_spec = self.stft_module.stft(mixture, pad=True)
-        mix_phase = mix_spec[:,:,1]
-        mix_amp_spec = taF.complex_norm(mix_spec)
-        mix_amp_spec = mix_amp_spec[:,1:,:]
-        mix_mag_spec = torch.log10(mix_amp_spec + self.eps)
-        mix_mag_spec = mix_mag_spec[:,1:,:]
-        
-        true_spec = self.stft_module.stft(true, pad=True)
-        true_amp_spec = taF.complex_norm(true_spec)
-        true_amp_spec = true_amp_spec[:,1:,:]
-        
-        #ex1
-        ex1_mix_spec = self.stft_module_ex1.stft(mixture, pad=True)
-        ex1_mix_amp_spec = taF.complex_norm(ex1_mix_spec)
-        ex1_mix_mag_spec = torch.log10(ex1_mix_amp_spec + self.eps)
-        ex1_mix_mag_spec = ex1_mix_mag_spec[:,1:,1:513]
-        
-        #ex2
-        ex2_mix_spec = self.stft_module_ex2.stft(mixture, pad=True)
-        ex2_mix_amp_spec = taF.complex_norm(ex2_mix_spec)
-        ex2_mix_mag_spec = torch.log10(ex2_mix_amp_spec + self.eps)
-        ex2_mix_mag_spec = ex2_mix_mag_spec[:,1:,:]
-        batch_size, f_size, t_size = ex2_mix_mag_spec.shape
-        pad_ex2_mix_mag_spec = torch.zeros((batch_size, f_size, 128), dtype=self.dtype, device=self.device)
-        pad_ex2_mix_mag_spec[:,:1024,:127] = ex2_mix_mag_spec[:,:,:]
-        
-        return mix_mag_spec, ex1_mix_mag_spec, pad_ex2_mix_mag_spec, true_amp_spec, mix_phase, mix_amp_spec
+        with torch.no_grad():
+            mix_spec = self.stft_module.stft(mixture, pad=True)
+            mix_phase = mix_spec[:,:,1]
+            mix_amp_spec = taF.complex_norm(mix_spec)
+            mix_amp_spec = mix_amp_spec[:,1:,:]
+            mix_mag_spec = torch.log10(mix_amp_spec + self.eps)
+            mix_mag_spec = mix_mag_spec[:,1:,:]
+            
+            true_spec = self.stft_module.stft(true, pad=True)
+            true_amp_spec = taF.complex_norm(true_spec)
+            true_amp_spec = true_amp_spec[:,1:,:]
+            
+            #ex1
+            ex1_mix_spec = self.stft_module_ex1.stft(mixture, pad=True)
+            ex1_mix_amp_spec = taF.complex_norm(ex1_mix_spec)
+            ex1_mix_mag_spec = torch.log10(ex1_mix_amp_spec + self.eps)
+            ex1_mix_mag_spec = ex1_mix_mag_spec[:,1:,1:513]
+            
+            #ex2
+            ex2_mix_spec = self.stft_module_ex2.stft(mixture, pad=True)
+            ex2_mix_amp_spec = taF.complex_norm(ex2_mix_spec)
+            ex2_mix_mag_spec = torch.log10(ex2_mix_amp_spec + self.eps)
+            ex2_mix_mag_spec = ex2_mix_mag_spec[:,1:,:]
+            batch_size, f_size, t_size = ex2_mix_mag_spec.shape
+            pad_ex2_mix_mag_spec = torch.zeros((batch_size, f_size, 128), dtype=self.dtype, device=self.device)
+            pad_ex2_mix_mag_spec[:,:1024,:127] = ex2_mix_mag_spec[:,:,:]
+            
+            return mix_mag_spec, ex1_mix_mag_spec, pad_ex2_mix_mag_spec, true_amp_spec, mix_phase, mix_amp_spec
         
     def _postporcess(self, x):
         #padding DC Component
@@ -78,20 +80,20 @@ class UNet_pp_Runner():
         pad_x[:,:,1:, :] = x[:,:,:,:]
         return pad_x
         
-    def _run(self, model, criterion, data_loader, batch_size, mode=None):
+    def _run(self, mode=None, data_loader=None):
         running_loss = 0
         for i, (mixture, _, _, _, vocals) in enumerate(data_loader):
             mixture = mixture.to(self.dtype).to(self.device)
             true = vocals.to(self.dtype).to(self.device)
             mix_mag_spec, ex1_mix_mag_spec, ex2_mix_mag_spec, true_amp_spec, _, mix_amp_spec = self._preprocess(mixture, true)
             
-            model.zero_grad()
-            est_mask = model(mix_mag_spec.unsqueeze(1), ex1_mix_mag_spec.unsqueeze(1), ex2_mix_mag_spec.unsqueeze(1))
+            self.model.zero_grad()
+            est_mask = self.model(mix_mag_spec.unsqueeze(1), ex1_mix_mag_spec.unsqueeze(1), ex2_mix_mag_spec.unsqueeze(1))
             est_mask = self._postporcess(est_mask)
             est_source = mix_amp_spec.unsqueeze(1) * est_mask
             
             if mode == 'train' or mode == 'validation':
-                loss = 10 * criterion(est_source, true_amp_spec)
+                loss = 10 * self.criterion(est_source, true_amp_spec)
                 running_loss += loss.data
                 if mode == 'train':
                     loss.backward()
@@ -108,7 +110,7 @@ class UNet_pp_Runner():
             print('epoch{0}'.format(epoch))
             start = time.time()
             self.model.train()
-            tmp_train_loss, est_source, est_mask, mix_amp_spec, true_amp_spec = self._run(self.model, self.criterion, self.train_data_loader, self.train_batch_size, mode='train')
+            tmp_train_loss, est_source, est_mask, mix_amp_spec, true_amp_spec = self._run(mode='train', data_loader=self.train_data_loader)
             train_loss = np.append(train_loss, tmp_train_loss.cpu().clone().numpy())
             # validation
             # self.model.eval()
@@ -125,6 +127,6 @@ class UNet_pp_Runner():
            
                         
 if __name__ == '__main__':
-    from configs.train_dsd_unet_pp_config_1 import cfg as train_cfg
+    from configs.dsd_unet_pp_config_1 import train_cfg
     obj = UNet_pp_Runner(train_cfg)
     obj.train()

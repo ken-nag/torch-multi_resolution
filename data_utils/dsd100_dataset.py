@@ -4,18 +4,20 @@ import torch
 import random
 
 class DSD100Dataset(torch.utils.data.Dataset):
-    def __init__(self, data_num, sample_len=None, transform=None, folder_type=None):
+    def __init__(self, data_num, sample_len=None, transform=None, folder_type=None, shuffle=True):
         self.data_num = data_num
         self.transform = transform
         self.npzs_path = glob.glob('../data/DSD100npz/{0}/*'.format(folder_type))
         self.sample_len = sample_len
+        self.shuffle = shuffle
         
     def __len__(self):
         return self.data_num
         
-    def __getitem__(self, _):
-        path = random.sample(self.npzs_path, 1)
-        npz_obj = np.load(path[0])
+    def __getitem__(self, idx):
+        if self.shuffle:
+            path = random.sample(self.npzs_path, 1)
+            npz_obj = np.load(path[0])
         
         # for debug
         # path = self.npzs_path[7]

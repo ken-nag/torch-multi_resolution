@@ -4,6 +4,7 @@ import time
 sys.path.append('../')
 from models.u_net import UNet
 from data_utils.dsd100_dataset import DSD100Dataset
+from data_utils.data_loader import FastDataLoader
 from utils.loss import MSE
 from utils.visualizer import show_TF_domein_result
 import numpy as np
@@ -31,8 +32,8 @@ class UNetRunner():
         self.train_dataset = DSD100Dataset(data_num=self.train_data_num, sample_len=self.sample_len, folder_type='train')
         self.valid_dataset = DSD100Dataset(data_num=self.valid_data_num, sample_len=self.sample_len, folder_type='validation')
         
-        self.train_data_loader = torch.utils.data.DataLoader(self.train_dataset, batch_size=self.train_batch_size, shuffle=True)
-        self.valid_data_loader = torch.utils.data.DataLoader(self.valid_dataset, batch_size=self.valid_batch_size, shuffle=True)
+        self.train_data_loader = FastDataLoader(self.train_dataset, batch_size=self.train_batch_size, shuffle=True)
+        self.valid_data_loader = FastDataLoader(self.valid_dataset, batch_size=self.valid_batch_size, shuffle=True)
         self.model = UNet().to(self.device)
         self.criterion = MSE()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
@@ -57,21 +58,18 @@ class UNetRunner():
     def _postporcess(self, est_sources):
         pass
         
-    def _run(self, model, criterion, data_loader, batch_size, mode=None):
+    def _run(self, mode=None):
         running_loss = 0
-        for i, (mixture, _, _, _, vocals) in enumerate(data_loader):
+        for i, (mixture, _, _, _, vocals) in enumerate(self.data_loader):
             mixture = mixture.to(self.dtype).to(self.device)
             true = vocals.to(self.dtype).to(self.device)
-            
-            pre_pro_time = time.time()
-            mix_mag_spec, true_amp_spec, _, mix_amp_spec = self._preprocess(mixture, true)
-            
-            model.zero_grad()
-            est_mask = model(mix_mag_spec.unsqueeze(1))
+            mix_mag_spec, true_amp_spec, _, mix_amp_spec = self._preprocess(mixture, true)            
+            self.model.zero_grad()
+            est_mask = self.model(mix_mag_spec.unsqueeze(1))
             est_source = mix_amp_spec.unsqueeze(1) * est_mask
             
             if mode == 'train' or mode == 'validation':
-                loss = 10 * criterion(est_source, true_amp_spec)
+                loss = 10 * self.criterion(est_source, true_amp_spec)
                 running_loss += loss.data
                 if mode == 'train':
                     loss.backward()
@@ -88,7 +86,7 @@ class UNetRunner():
             print('epoch{0}'.format(epoch))
             start = time.time()
             self.model.train()
-            tmp_train_loss, est_source, est_mask, mix_amp_spec, true_amp_spec = self._run(self.model, self.criterion, self.train_data_loader, self.train_batch_size, mode='train')
+            tmp_train_loss, est_source, est_mask, mix_amp_spec, true_amp_spec = self._run(mode='train')
             train_loss = np.append(train_loss, tmp_train_loss.cpu().clone().numpy())
             # validation
             # self.model.eval()
