@@ -76,7 +76,7 @@ class UNet_pp_Runner():
     def _postporcess(self, x):
         #padding DC Component
         batch_size, channel_size, f_size, t_size = x.shape
-        pad_x = torch.zeros((batch_size, channel_size, 512, t_size), dtype=self.dtype, device=self.device)
+        pad_x = torch.zeros((batch_size, channel_size, f_size+1, t_size), dtype=self.dtype, device=self.device)
         pad_x[:,:,1:, :] = x[:,:,:,:]
         return pad_x
         

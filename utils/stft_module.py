@@ -14,6 +14,7 @@ class STFTModule():
         self.freq_num = self._cal_freq_num()
         self.pad = None
         self.pad_len = None
+        self.sample_len = None
         
     def _cal_freq_num(self):
         return (np.floor(self.n_fft / 2) + 1).astype(np.int32)
@@ -31,12 +32,12 @@ class STFTModule():
                           window=self.window)
     
     def _zero_pad(self, x):
-        batch_size, sig_len = x.shape
-        frame_num = self._cal_frame_num(sig_len)
+        batch_size, self.sample_len = x.shape
+        frame_num = self._cal_frame_num(self.sample_len)
         pad_x_len = self.win_length + ((frame_num - 1) * self.hop_length)
-        self.pad_len = pad_x_len - sig_len
+        self.pad_len = pad_x_len - self.sample_len
         buff = torch.zeros((batch_size, pad_x_len), dtype=self.dtype, device=self.device.type)
-        buff[:, :sig_len] = x
+        buff[:, :self.sample_len] = x
         return buff
        
     def _cal_frame_num(self, sig_len):
@@ -46,12 +47,14 @@ class STFTModule():
         pass
      
     def istft(self, x):
-        return torchaudio.functional.istft(x, 
-                                           self.nfft,
-                                           self.win_length, 
-                                           self.hop_length,
-                                           self.win_length, 
-                                           window=self.window)
+        wave  = torchaudio.functional.istft(x, 
+                                            n_fft=self.n_fft,
+                                            win_length=self.win_length, 
+                                            hop_length=self.hop_length,
+                                            window=self.window,
+                                            center=None,
+                                            length=self.sample_len+self.pad_len)
+        return wave
             
     def stft_3D(self, x, pad=None):
        batch_size, source_num, sig_len = x.shape
