@@ -63,6 +63,7 @@ class UNetTester():
                 est_mask = self._postprocess(est_mask)
                 est_source = mix_spec * est_mask[...,None]
                 est_wave = self.stft_module.istft(est_source)
+                wave = est_wave.flatten()
                 print('test time:', time.time() - start)
         
 

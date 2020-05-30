@@ -31,11 +31,11 @@ class DSD100Dataset(torch.utils.data.Dataset):
             path = self.npzs_path[idx]
             npz_obj = np.load(path)
             
-        mixture = npz_obj['mixture']
-        bass = npz_obj['bass']
-        drums = npz_obj['drums']
-        other = npz_obj['other']
-        vocals = npz_obj['vocals']
+        mixture = torch.from_numpy(npz_obj['mixture']).clone()
+        bass = torch.from_numpy(npz_obj['bass']).clone()
+        drums = torch.from_numpy(npz_obj['drums']).clone()
+        other = torch.from_numpy(npz_obj['other']).clone()
+        vocals = torch.from_numpy(npz_obj['vocals']).clone()
         
         if self.folder_type == 'train' or self.folder_type == 'validation':
             return mixture[:self.sample_len], bass[:self.sample_len], drums[:self.sample_len], other[:self.sample_len], vocals[:self.sample_len]

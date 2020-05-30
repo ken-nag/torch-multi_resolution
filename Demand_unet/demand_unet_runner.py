@@ -14,7 +14,7 @@ import torchaudio.functional as taF
 from IPython import get_ipython
 get_ipython().run_line_magic('matplotlib', 'inline')
 
-class UNetRunner():
+class DemandUNetRunner():
     def __init__(self, cfg):
         
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -98,5 +98,5 @@ class UNetRunner():
                         
 if __name__ == '__main__':
     from configs.demand_unet_config_1 import train_cfg
-    obj = UNetRunner(train_cfg)
+    obj = DemandUNetRunner(train_cfg)
     obj.train()
