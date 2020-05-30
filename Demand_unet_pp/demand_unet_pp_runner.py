@@ -107,7 +107,7 @@ class DemandUNet_pp_Runner():
             start = time.time()
             self.model.train()
             tmp_train_loss, est_source, est_mask, noisy_amp_spec, clean_amp_spec = self._run(mode='train', data_loader=self.test_data_loader)
-                 
+            train_loss = np.append(train_loss, tmp_train_loss.cpu().clone().numpy())
             if (epoch + 1) % 10 == 0:
                 show_TF_domein_result(train_loss, noisy_amp_spec[0,:,:], est_mask[0,0,:,:], est_source[0,0,:,:], clean_amp_spec[0,:,:])
                 torch.save(self.model.state_dict(), self.save_path + 'u_net{0}.ckpt'.format(epoch + 1))

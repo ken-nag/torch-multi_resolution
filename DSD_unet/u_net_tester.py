@@ -1,14 +1,14 @@
 import torch
 import sys
 import time
-import mir_eval
 sys.path.append('../')
 from models.u_net import UNet
 from data_utils.dsd100_dataset import DSD100Dataset
 from data_utils.data_loader import FastDataLoader
 from utils.stft_module import STFTModule
+from utils.evaluation import mss_evals
 import torchaudio.functional as taF
-
+import numpy as np
 from IPython import get_ipython
 get_ipython().run_line_magic('matplotlib', 'inline')
 
@@ -30,9 +30,9 @@ class UNetTester():
         self.test_dataset = DSD100Dataset(data_num=self.test_data_num, sample_len=self.sample_len, folder_type='test')
         self.test_data_loader =  FastDataLoader(self.test_dataset, batch_size=self.test_batch_size, shuffle=True)
         
-        self.sdr_list = []
-        self.sar_list = []
-        self.sir_list = []
+        self.sdr_list = np.array([])
+        self.sar_list = np.array([])
+        self.sir_list = np.array([])
             
     def _preprocess(self, mixture, true):
         mix_spec = self.stft_module.stft(mixture, pad=True)
@@ -56,15 +56,27 @@ class UNetTester():
                 start = time.time()
                 mixture = mixture.squeeze(0).to(self.dtype).to(self.device)
                 true = vocals.squeeze(0).to(self.dtype).to(self.device)
-                accompany = mixture - true
-                mix_mag_spec, mix_spec = self._preprocess(mixture, true)
                 
+                mix_mag_spec, mix_spec = self._preprocess(mixture, true)
                 est_mask = self.model(mix_mag_spec.unsqueeze(1))
                 est_mask = self._postprocess(est_mask)
                 est_source = mix_spec * est_mask[...,None]
                 est_wave = self.stft_module.istft(est_source)
-                wave = est_wave.flatten()
+                
+                est_wave = est_wave.flatten()  
+                mixture = mixture.flatten()
+                true = true.flatten()
+                true_accompany = mixture - true
+                est_accompany = mixture - est_wave
+                sdr, sir, sar = mss_evals(est_wave, est_accompany, true, true_accompany)
+                self.sdr_list = np.append(self.sdr_list, sdr)
+                self.sar_list = np.append(self.sar_list, sar)
+                self.sir_list = np.append(self.sir_list, sir)
                 print('test time:', time.time() - start)
+                
+            print('sdr mean:', np.mean(self.sdr_list))
+            print('sir mean:', np.mean(self.sir_list))
+            print('sar mean:', np.mean(self.sar_list))
         
 
 if __name__ == '__main__':
