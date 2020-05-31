@@ -65,8 +65,8 @@ class UNet_pp_Tester():
     def _postprocess(self, x):
         x = x.squeeze(1)
         batch_size, f_size, t_size = x.shape
-        pad_x = torch.zeros((batch_size, f_size+1, t_size), dtype=self.dtype, device=self.device)
-        pad_x[:,1:, :] = x[:,:,:]
+        pad_x = torch.zeros((batch_size, f_size+2, t_size), dtype=self.dtype, device=self.device)
+        pad_x[:,1:-1, :] = x[:,:,:]
         return pad_x
         
     
