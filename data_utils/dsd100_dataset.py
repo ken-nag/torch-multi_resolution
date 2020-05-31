@@ -4,7 +4,7 @@ import torch
 import random
 
 class DSD100Dataset(torch.utils.data.Dataset):
-    def __init__(self, data_num, sample_len=None, transform=None, folder_type=None, shuffle=True):
+    def __init__(self, data_num, sample_len=None, transform=None, folder_type=None, shuffle=True, device=None):
         self.data_num = data_num
         self.dtype= torch.float32
         self.transform = transform
@@ -12,13 +12,14 @@ class DSD100Dataset(torch.utils.data.Dataset):
         self.sample_len = sample_len
         self.shuffle = shuffle
         self.folder_type = folder_type
+        self.device=device
         
     def __len__(self):
         return self.data_num
     
     def _crop_per_segment(self, x):
         x_len = x.shape[0]
-        batch_size = torch.ceil(x_len / self.sample_len)
+        batch_size = np.ceil(x_len / self.sample_len).astype(np.int32)
         pad_len = self.sample_len - (x_len % self.sample_len)
         pad_x = torch.zeros(x_len + pad_len, dtype=self.dtype, device=self.device)
         pad_x[:x_len] = x[:]

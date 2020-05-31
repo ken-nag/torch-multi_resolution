@@ -39,7 +39,6 @@ class UNetTester():
         mix_amp_spec = taF.complex_norm(mix_spec)
         mix_amp_spec = mix_amp_spec[:,1:,:]
         mix_mag_spec = torch.log10(mix_amp_spec + self.eps)
-        mix_mag_spec = mix_mag_spec[:,1:,:]
         return mix_mag_spec, mix_spec
     
     def _postprocess(self, x):

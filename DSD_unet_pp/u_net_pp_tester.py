@@ -30,7 +30,7 @@ class UNet_pp_Tester():
         self.test_data_num = cfg['test_data_num']
         self.test_batch_size = cfg['test_batch_size']
         self.sample_len = cfg['sample_len']
-        self.test_dataset = DSD100Dataset(data_num=self.test_data_num, sample_len=self.sample_len, folder_type='test')
+        self.test_dataset = DSD100Dataset(data_num=self.test_data_num, sample_len=self.sample_len, folder_type='test', device=self.device)
         self.test_data_loader =  FastDataLoader(self.test_dataset, batch_size=self.test_batch_size, shuffle=True)
         
         self.sdr_list = np.array([])
@@ -65,8 +65,8 @@ class UNet_pp_Tester():
     def _postprocess(self, x):
         x = x.squeeze(1)
         batch_size, f_size, t_size = x.shape
-        pad_x = torch.zeros((batch_size, f_size+2, t_size), dtype=self.dtype, device=self.device)
-        pad_x[:,1:-1, :] = x[:,:,:]
+        pad_x = torch.zeros((batch_size, f_size+1, t_size), dtype=self.dtype, device=self.device)
+        pad_x[:,1:, :] = x[:,:,:]
         return pad_x
         
     
