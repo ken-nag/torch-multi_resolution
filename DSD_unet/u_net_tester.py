@@ -27,8 +27,8 @@ class UNetTester():
         self.test_data_num = cfg['test_data_num']
         self.test_batch_size = cfg['test_batch_size']
         self.sample_len = cfg['sample_len']
-        self.test_dataset = DSD100Dataset(data_num=self.test_data_num, sample_len=self.sample_len, folder_type='test')
-        self.test_data_loader =  FastDataLoader(self.test_dataset, batch_size=self.test_batch_size, shuffle=True)
+        self.test_dataset = DSD100Dataset(data_num=self.test_data_num, sample_len=self.sample_len, folder_type='test', shuffle=False)
+        self.test_data_loader =  FastDataLoader(self.test_dataset, batch_size=self.test_batch_size, shuffle=False)
         
         self.sdr_list = np.array([])
         self.sar_list = np.array([])
