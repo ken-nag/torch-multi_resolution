@@ -1,8 +1,13 @@
 import mir_eval
 import numpy as np
+import torch
 
-def si_sdr():
-    pass
+def si_sdr(est, true):
+    alpha = (true*est).sum(1, keepdim=True)/(true*true).sum(1, keepdim=True)
+    target = alpha*true
+    noise = target - est
+    val = 10*torch.log10((target*target).sum(dim=1)/(noise*noise).sum(dim=1))
+    return val
 
 def mss_evals(est_source, est_accompany, true_source, true_accompany):
     est_source = est_source.to('cpu').detach().numpy().copy()
