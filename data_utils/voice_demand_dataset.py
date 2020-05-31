@@ -6,13 +6,14 @@ import os
 import random
 
 class VoicebankDemandDataset(torch.utils.data.Dataset):
-    def __init__(self, data_num, folder_type=None, sample_len=None, shuffle=True):
+    def __init__(self, data_num, folder_type=None, sample_len=None, shuffle=True, device=None):
         self.dtype = torch.float32
         self.dataset_root = '../data/VoicebankDemand/'
         self.sample_len = sample_len
         self.folder_type = folder_type
         self.data_num = data_num
         self.shuffle = shuffle
+        self.device = device
         
         if self.folder_type == 'train' or self.folder_type == 'validation':
             self.clean_root = self.dataset_root + '/clean_trainset_wav/'
@@ -46,7 +47,7 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
     
     def _crop_per_segment(self, x):
         x_len = x.shape[0]
-        batch_size = torch.ceil(x_len / self.sample_len).to(torch.int32)
+        batch_size = torch.ceil(torch.tensor(x_len / self.sample_len)).to(torch.int32)
         pad_len = self.sample_len - (x_len % self.sample_len)
         pad_x = torch.zeros(x_len + pad_len, dtype=self.dtype, device=self.device)
         pad_x[:x_len] = x[:]
@@ -56,7 +57,7 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
         x_len = x.shape[-1]
         pad_x = torch.zeros(self.sample_len, dtype=self.dtype)
         pad_x[:x_len] = x[:]
-        return pad_x
+        return pad_x.unsqueeze(0)
         
     def __len__(self):
         return self.data_num
