@@ -41,7 +41,7 @@ class UNet_pp_Runner():
         self.model = UNet_pp().to(self.device)
         self.criterion = MSE()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
-        self.save_path = 'results/model/train_dsd_unet_pp_config_1/'
+        self.save_path = 'results/model/dsd_unet_pp_config_1/'
         
     def _preprocess(self, mixture, true):
         with torch.no_grad():
@@ -50,7 +50,6 @@ class UNet_pp_Runner():
             mix_amp_spec = taF.complex_norm(mix_spec)
             mix_amp_spec = mix_amp_spec[:,1:,:]
             mix_mag_spec = torch.log10(mix_amp_spec + self.eps)
-            mix_mag_spec = mix_mag_spec[:,1:,:]
             
             true_spec = self.stft_module.stft(true, pad=True)
             true_amp_spec = taF.complex_norm(true_spec)
@@ -112,12 +111,7 @@ class UNet_pp_Runner():
             self.model.train()
             tmp_train_loss, est_source, est_mask, mix_amp_spec, true_amp_spec = self._run(mode='train', data_loader=self.train_data_loader)
             train_loss = np.append(train_loss, tmp_train_loss.cpu().clone().numpy())
-            # validation
-            # self.model.eval()
-            # with torch.no_grad():
-            #    tmp_valid_loss, est_source, est_mask, mix_amp_spec = self._run(self.model, self.criterion, self.valid_data_loader, self.valid_batch_size, mode='validation')
-            #    valid_loss = np.append(valid_loss, tmp_valid_loss.cpu().clone().numpy())
-                 
+
             if (epoch + 1) % 10 == 0:
                 show_TF_domein_result(train_loss, mix_amp_spec[0,:,:], est_mask[0,0,:,:], est_source[0,0,:,:], true_amp_spec[0,:,:])
                 torch.save(self.model.state_dict(), self.save_path + 'u_net{0}.ckpt'.format(epoch + 1))
