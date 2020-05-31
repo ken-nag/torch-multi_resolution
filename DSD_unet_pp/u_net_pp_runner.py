@@ -46,7 +46,6 @@ class UNet_pp_Runner():
     def _preprocess(self, mixture, true):
         with torch.no_grad():
             mix_spec = self.stft_module.stft(mixture, pad=True)
-            mix_phase = mix_spec[:,:,1]
             mix_amp_spec = taF.complex_norm(mix_spec)
             mix_amp_spec = mix_amp_spec[:,1:,:]
             mix_mag_spec = torch.log10(mix_amp_spec + self.eps)
@@ -70,7 +69,7 @@ class UNet_pp_Runner():
             pad_ex2_mix_mag_spec = torch.zeros((batch_size, f_size, 128), dtype=self.dtype, device=self.device)
             pad_ex2_mix_mag_spec[:,:1024,:127] = ex2_mix_mag_spec[:,:,:]
             
-            return mix_mag_spec, ex1_mix_mag_spec, pad_ex2_mix_mag_spec, true_amp_spec, mix_phase, mix_amp_spec
+            return mix_mag_spec, ex1_mix_mag_spec, pad_ex2_mix_mag_spec, true_amp_spec, mix_amp_spec
         
     def _postporcess(self, x):
         #padding DC Component
@@ -84,7 +83,7 @@ class UNet_pp_Runner():
         for i, (mixture, _, _, _, vocals) in enumerate(data_loader):
             mixture = mixture.to(self.dtype).to(self.device)
             true = vocals.to(self.dtype).to(self.device)
-            mix_mag_spec, ex1_mix_mag_spec, ex2_mix_mag_spec, true_amp_spec, _, mix_amp_spec = self._preprocess(mixture, true)
+            mix_mag_spec, ex1_mix_mag_spec, ex2_mix_mag_spec, true_amp_spec, mix_amp_spec = self._preprocess(mixture, true)
             
             self.model.zero_grad()
             est_mask = self.model(mix_mag_spec.unsqueeze(1), ex1_mix_mag_spec.unsqueeze(1), ex2_mix_mag_spec.unsqueeze(1))
@@ -102,7 +101,6 @@ class UNet_pp_Runner():
     
     def train(self):
         train_loss = np.array([])
-        valid_loss = np.array([])
         print("start train")
         for epoch in range(self.epoch_num):
             # train

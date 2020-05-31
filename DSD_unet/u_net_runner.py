@@ -37,33 +37,31 @@ class UNetRunner():
         self.model = UNet().to(self.device)
         self.criterion = MSE()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
-        self.save_path = 'results/model/train_dsd_unet_config_1/'
+        self.save_path = 'results/model/dsd_unet_config_1/'
         
     def _preprocess(self, mixture, true):
         with torch.no_grad():
             mix_spec = self.stft_module.stft(mixture, pad=True)
-            mix_phase = mix_spec[:,:,1]
             
             mix_amp_spec = taF.complex_norm(mix_spec)
             mix_amp_spec = mix_amp_spec[:,1:,:]
             mix_mag_spec = torch.log10(mix_amp_spec + self.eps)
-            mix_mag_spec = mix_mag_spec[:,1:,:]
             
             true_spec = self.stft_module.stft(true, pad=True)     
             true_amp_spec = taF.complex_norm(true_spec)     
             true_amp_spec = true_amp_spec[:,1:,:]
         
-        return mix_mag_spec, true_amp_spec, mix_phase, mix_amp_spec
+        return mix_mag_spec, true_amp_spec, mix_amp_spec
         
     def _postporcess(self, est_sources):
         pass
         
-    def _run(self, mode=None):
+    def _run(self, mode=None, data_loader=None):
         running_loss = 0
-        for i, (mixture, _, _, _, vocals) in enumerate(self.data_loader):
+        for i, (mixture, _, _, _, vocals) in enumerate(data_loader):
             mixture = mixture.to(self.dtype).to(self.device)
             true = vocals.to(self.dtype).to(self.device)
-            mix_mag_spec, true_amp_spec, _, mix_amp_spec = self._preprocess(mixture, true)            
+            mix_mag_spec, true_amp_spec, mix_amp_spec = self._preprocess(mixture, true)            
             self.model.zero_grad()
             est_mask = self.model(mix_mag_spec.unsqueeze(1))
             est_source = mix_amp_spec.unsqueeze(1) * est_mask
@@ -79,21 +77,15 @@ class UNetRunner():
     
     def train(self):
         train_loss = np.array([])
-        valid_loss = np.array([])
         print("start train")
         for epoch in range(self.epoch_num):
             # train
             print('epoch{0}'.format(epoch))
             start = time.time()
             self.model.train()
-            tmp_train_loss, est_source, est_mask, mix_amp_spec, true_amp_spec = self._run(mode='train')
+            tmp_train_loss, est_source, est_mask, mix_amp_spec, true_amp_spec = self._run(mode='train', data_loader=self.train_data_loader)
             train_loss = np.append(train_loss, tmp_train_loss.cpu().clone().numpy())
-            # validation
-            # self.model.eval()
-            # with torch.no_grad():
-            #    tmp_valid_loss, est_source, est_mask, mix_amp_spec = self._run(self.model, self.criterion, self.valid_data_loader, self.valid_batch_size, mode='validation')
-            #    valid_loss = np.append(valid_loss, tmp_valid_loss.cpu().clone().numpy())
-                 
+          
             if (epoch + 1) % 10 == 0:
                 plot_time = time.time()
                 show_TF_domein_result(train_loss, mix_amp_spec[0,:,:], est_mask[0,0,:,:], est_source[0,0,:,:], true_amp_spec[0,:,:])
@@ -104,6 +96,6 @@ class UNetRunner():
             print('----excute time: {0}'.format(end - start))
                         
 if __name__ == '__main__':
-    from configs.train_dsd_unet_config_1 import cfg as train_cfg
+    from configs.dsd_unet_config_1 import train_cfg
     obj = UNetRunner(train_cfg)
     obj.train()
