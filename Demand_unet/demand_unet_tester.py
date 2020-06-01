@@ -78,7 +78,11 @@ class DemandUNet_Tester():
                 
             print('pesq mean:', np.mean(self.pesq_list))
             print('stoi mean:', np.mean(self.stoi_list))
-            print('sdr mean:', np.mean(self.si_sdr_list))
+            print('si-sdr mean:', np.mean(self.si_sdr_list))
+            
+            print('pesq median:', np.median(self.pedq_lsit))
+            print('stoi median:', np.median(self.stoi_list))
+            print('si-sder median:', np.median(self.si_sdr_list))
         
 
 if __name__ == '__main__':
