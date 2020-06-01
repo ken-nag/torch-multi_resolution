@@ -5,4 +5,11 @@ class CommonUtils():
         for name, params in model.named_parameters():
             if 'bias' in name:
                 torch.nn.init.zeros_(params)
+                
+                
+class EarlyStopping():
+    def __init__(self,):
+        pass
+    
+    def validation(self,):
         
