@@ -40,6 +40,7 @@ class DemandUNet_pp_Tester():
     
     def _preprocess(self, noisy):
         with torch.no_grad():
+            noisy = noisy.unsqueeze(0) #tmp
             noisy_spec = self.stft_module.stft(noisy, pad=True)
             noisy_amp_spec = taF.complex_norm(noisy_spec)
             noisy_amp_spec = noisy_amp_spec[:,1:,:]
