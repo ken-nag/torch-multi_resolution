@@ -8,8 +8,20 @@ class CommonUtils():
                 
                 
 class EarlyStopping():
-    def __init__(self,):
-        pass
+    def __init__(self, patience=0):
+        self.step = 0
+        self.loss = torch.tensor(float('inf'))
+        self.patience = patience
     
-    def validation(self,):
+    def validation(self, loss):
+        if self.loss < loss:
+            self.step += 1
+            if self.step > self.patience:
+                print('Early stopping!')
+                return True
+            
+        else:
+            self.step = 0
+            self.loss = loss
         
+        return False

@@ -20,7 +20,7 @@ class DemandUNet_pp_Runner():
         
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.dtype= torch.float32
-        self.eps = 1e-4
+        self.eps = 1e-8
         
         self.stft_module = STFTModule(cfg['stft_params'], self.device)
         self.stft_module_ex1 = STFTModule(cfg['stft_params_ex1'], self.device)

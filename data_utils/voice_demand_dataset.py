@@ -6,7 +6,7 @@ import os
 import random
 
 class VoicebankDemandDataset(torch.utils.data.Dataset):
-    def __init__(self, data_num, folder_type=None, sample_len=None, shuffle=True, device=None):
+    def __init__(self, data_num, full_data_num=None, folder_type=None, sample_len=None, shuffle=True, device=None):
         self.dtype = torch.float32
         self.dataset_root = '../data/VoicebankDemand/'
         self.sample_len = sample_len
@@ -24,7 +24,17 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
             self.noisy_root = self.dataset_root + '/noisy_testset_wav/'
         
         file_path = glob.glob(self.clean_root + '*.wav')
-        self.wav_names = [os.path.split(e)[-1] for e in file_path]
+        wav_names = [os.path.split(e)[-1] for e in file_path]
+
+        if self.folder_type == 'train':
+            self.wav_names = wav_names[:full_data_num]
+        
+        elif self.folder_type == 'validation':
+            self.wav_names = wav_names[:-full_data_num]
+
+        else:
+            self.wav_names = wav_names
+            
         
     def _cut_or_pad(self, x):
         x_len = x.shape[-1]

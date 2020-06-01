@@ -1,6 +1,5 @@
 import torch
 import torchaudio
-from scipy.signal import hann
 import numpy as np
 
 class STFTModule():
@@ -74,5 +73,14 @@ class STFTModule():
            buff[i, :, :, :, :] = self.stft(source, pad=pad)
            
        return buff
+   
+    def to_normalize_mag(self, x):
+        flooring = 1e-4
+        eps = 1e-8
+        max_val = x.reshape(-1).max()
+        logx = torch.log10(torch.clamp(x, min=flooring*max_val))
+        norm_logx = (logx - logx.mean(-1, keepdim=True))/(logx.std(-1, keepdim=True)+eps)
+        return norm_logx
+        
     
     

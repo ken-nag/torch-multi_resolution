@@ -30,8 +30,11 @@ class DemandUNet_pp_Tester():
         self.test_data_num = cfg['test_data_num']
         self.test_batch_size = cfg['test_batch_size']
         self.sample_len = cfg['sample_len']
-        #tmp
-        self.test_dataset = VoicebankDemandDataset(data_num=self.test_data_num, sample_len=self.sample_len, folder_type='train', shuffle=False)
+        
+        self.test_dataset = VoicebankDemandDataset(data_num=self.test_data_num, 
+                                                   sample_len=self.sample_len, 
+                                                   folder_type='test', 
+                                                   shuffle=False)
         self.test_data_loader =  FastDataLoader(self.test_dataset, batch_size=self.test_batch_size, shuffle=False)
         
         self.stoi_list = np.array([])
@@ -40,7 +43,6 @@ class DemandUNet_pp_Tester():
     
     def _preprocess(self, noisy):
         with torch.no_grad():
-            noisy = noisy.unsqueeze(0) #tmp
             noisy_spec = self.stft_module.stft(noisy, pad=True)
             noisy_amp_spec = taF.complex_norm(noisy_spec)
             noisy_amp_spec = noisy_amp_spec[:,1:,:]
