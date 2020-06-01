@@ -32,7 +32,6 @@ class STFTModule():
                           window=self.window)
     
     def _stft_zero_pad(self, x):
-        print(x.shape)
         batch_size, self.sample_len = x.shape
         frame_num = self._cal_frame_num(self.sample_len)
         pad_x_len = self.win_length + ((frame_num - 1) * self.hop_length)

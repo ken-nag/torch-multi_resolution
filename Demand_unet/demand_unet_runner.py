@@ -37,7 +37,7 @@ class DemandUNetRunner():
         self.model = UNet().to(self.device)
         self.criterion = MSE()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
-        self.save_path = 'results/model/demand_unet_config_1/'
+        self.save_path = cfg['save_path']
         
     def _preprocess(self, noisy, clean):
         with torch.no_grad():
