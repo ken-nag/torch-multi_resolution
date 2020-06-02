@@ -46,18 +46,18 @@ class DemandUNet_pp_Tester():
             noisy_spec = self.stft_module.stft(noisy, pad=True)
             noisy_amp_spec = taF.complex_norm(noisy_spec)
             noisy_amp_spec = noisy_amp_spec[:,1:,:]
-            noisy_mag_spec = torch.log10(noisy_amp_spec + self.eps)
+            noisy_mag_spec = self.stft_module.to_normalize_mag(noisy_amp_spec)
             
             #ex1
             ex1_noisy_spec = self.stft_module_ex1.stft(noisy, pad=True)
             ex1_noisy_amp_spec = taF.complex_norm(ex1_noisy_spec)
-            ex1_noisy_mag_spec = torch.log10(ex1_noisy_amp_spec + self.eps)
+            ex1_noisy_mag_spec = self.stft_module_ex1.to_normalize_mag(ex1_noisy_amp_spec)
             ex1_noisy_mag_spec = ex1_noisy_mag_spec[:,1:,1:513]
             
             #ex2
             ex2_noisy_spec = self.stft_module_ex2.stft(noisy, pad=True)
             ex2_noisy_amp_spec = taF.complex_norm(ex2_noisy_spec)
-            ex2_noisy_mag_spec = torch.log10(ex2_noisy_amp_spec + self.eps)
+            ex2_noisy_mag_spec = self.stft_module_ex2.to_normalize_mag(ex2_noisy_amp_spec)
             ex2_noisy_mag_spec = ex2_noisy_mag_spec[:,1:,:]
             batch_size, f_size, t_size = ex2_noisy_mag_spec.shape
             pad_ex2_noisy_mag_spec = torch.zeros((batch_size, f_size, 128), dtype=self.dtype, device=self.device)

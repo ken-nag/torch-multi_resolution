@@ -9,6 +9,7 @@ from utils.loss import MSE
 from utils.visualizer import show_TF_domein_result
 import numpy as np
 from utils.stft_module import STFTModule
+from utils.common_utils import EarlyStopping
 import torchaudio.functional as taF
 
 from IPython import get_ipython
@@ -33,20 +34,39 @@ class DemandUNet_pp_Runner():
         self.train_batch_size = cfg['train_batch_size']
         self.valid_batch_size = cfg['valid_batch_size']
         
-        self.test_dataset = VoicebankDemandDataset(data_num=self.train_data_num, sample_len=self.sample_len, folder_type='train')
-        self.test_data_loader = FastDataLoader(self.test_dataset, batch_size=self.train_batch_size, shuffle=True)
+        self.train_full_data_num = cfg['train_full_data_num']
+        self.valid_full_data_num = cfg['valid_full_data_num']
+        self.save_path = cfg['save_path']
+        
+        self.train_dataset = VoicebankDemandDataset(data_num=self.train_data_num, 
+                                                    full_data_num=self.train_full_data_num,
+                                                    sample_len=self.sample_len, 
+                                                    folder_type='train')
+        
+        self.valid_dataset = VoicebankDemandDataset(data_num=self.valid_data_num, 
+                                                    full_data_num=self.valid_full_data_num,
+                                                    sample_len=self.sample_len, 
+                                                    folder_type='validation')
+        
+        self.train_data_loader = FastDataLoader(self.train_dataset, 
+                                                batch_size=self.train_batch_size, 
+                                                shuffle=True)
+        
+        self.valid_data_loader = FastDataLoader(self.valid_dataset, 
+                                                batch_size=self.valid_batch_size, 
+                                                shuffle=True)
       
         self.model = UNet_pp().to(self.device)
         self.criterion = MSE()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
-        self.save_path = 'results/model/demand_unet_pp_config_1/'
+        self.early_stopping = EarlyStopping(patience=10)
         
     def _preprocess(self, noisy, clean):
         with torch.no_grad():
             noisy_spec = self.stft_module.stft(noisy, pad=True)
             noisy_amp_spec = taF.complex_norm(noisy_spec)
             noisy_amp_spec = noisy_amp_spec[:,1:,:]
-            noisy_mag_spec = torch.log10(noisy_amp_spec + self.eps)
+            noisy_mag_spec = self.stft_module.to_normalize_mag(noisy_amp_spec)
             
             clean_spec = self.stft_module.stft(clean, pad=True)
             clean_amp_spec = taF.complex_norm(clean_spec)
@@ -55,13 +75,13 @@ class DemandUNet_pp_Runner():
             #ex1
             ex1_noisy_spec = self.stft_module_ex1.stft(noisy, pad=True)
             ex1_noisy_amp_spec = taF.complex_norm(ex1_noisy_spec)
-            ex1_noisy_mag_spec = torch.log10(ex1_noisy_amp_spec + self.eps)
+            ex1_noisy_mag_spec = self.stft_module_ex1.to_normalize_mag(ex1_noisy_amp_spec)
             ex1_noisy_mag_spec = ex1_noisy_mag_spec[:,1:,1:513]
             
             #ex2
             ex2_noisy_spec = self.stft_module_ex2.stft(noisy, pad=True)
             ex2_noisy_amp_spec = taF.complex_norm(ex2_noisy_spec)
-            ex2_noisy_mag_spec = torch.log10(ex2_noisy_amp_spec + self.eps)
+            ex2_noisy_mag_spec = self.stft_module_ex2.to_normalize_mag(ex2_noisy_amp_spec)
             ex2_noisy_mag_spec = ex2_noisy_mag_spec[:,1:,:]
             batch_size, f_size, t_size = ex2_noisy_mag_spec.shape
             pad_ex2_noisy_mag_spec = torch.zeros((batch_size, f_size, 128), dtype=self.dtype, device=self.device)
@@ -99,16 +119,34 @@ class DemandUNet_pp_Runner():
     
     def train(self):
         train_loss = np.array([])
+        valid_loss = np.array([])
         print("start train")
         for epoch in range(self.epoch_num):
             # train
             print('epoch{0}'.format(epoch))
             start = time.time()
             self.model.train()
-            tmp_train_loss, est_source, est_mask, noisy_amp_spec, clean_amp_spec = self._run(mode='train', data_loader=self.test_data_loader)
-            train_loss = np.append(train_loss, tmp_train_loss.cpu().clone().numpy())
+            tmp_train_loss, _, _, _, _ = self._run(mode='train', data_loader=self.train_data_loader)
+            train_loss = np.append(train_loss, 
+                                   tmp_train_loss.cpu().clone().numpy())
+            
+            self.model.eval()
+            with torch.no_grad():
+                tmp_valid_loss, est_source, est_mask, noisy_amp_spec, clean_amp_spec = self._run(mode='validation', data_loader=self.valid_data_loader)
+            
+                if self.early_stopping.validation(tmp_valid_loss):
+                    torch.save(self.model.state_dict(), self.save_path + 'u_net{0}.ckpt'.format(epoch + 1))
+                    break
+                
+                valid_loss = np.append(valid_loss, 
+                                       tmp_valid_loss.cpu().clone().numpy())
             if (epoch + 1) % 10 == 0:
-                show_TF_domein_result(train_loss, noisy_amp_spec[0,:,:], est_mask[0,0,:,:], est_source[0,0,:,:], clean_amp_spec[0,:,:])
+                show_TF_domein_result(train_loss, 
+                                      valid_loss,
+                                      noisy_amp_spec[0,:,:],
+                                      est_mask[0,0,:,:],
+                                      est_source[0,0,:,:], 
+                                      clean_amp_spec[0,:,:])
                 torch.save(self.model.state_dict(), self.save_path + 'u_net{0}.ckpt'.format(epoch + 1))
             
             end = time.time()

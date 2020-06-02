@@ -45,7 +45,7 @@ class DemandUNet_Tester():
             noisy_spec = self.stft_module.stft(noisy, pad=True)
             noisy_amp_spec = taF.complex_norm(noisy_spec)
             noisy_amp_spec = noisy_amp_spec[:,1:,:]
-            noisy_mag_spec = torch.log10(noisy_amp_spec + self.eps)
+            noisy_mag_spec = self.stft_module.to_normalize_mag(noisy_amp_spec)
             
             return noisy_mag_spec, noisy_spec
         
