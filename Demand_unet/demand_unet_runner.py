@@ -113,11 +113,12 @@ class DemandUNetRunner():
                 
             if (epoch + 1) % 10 == 0:
                 plot_time = time.time()
+                est_source = taF.complex_norm(est_source)
                 show_TF_domein_result(train_loss, 
                                       valid_loss, 
                                       noisy_amp_spec[0,:,:],
                                       est_mask[0,:,:],
-                                      est_source[0,0,:,:],
+                                      est_source[0,:,:],
                                       clean_amp_spec[0,:,:])
                 print('plot_time:', time.time() - plot_time)
                 torch.save(self.model.state_dict(), self.save_path + 'u_net{0}.ckpt'.format(epoch + 1))
