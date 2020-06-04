@@ -2,10 +2,10 @@ import torch
 import sys
 import time
 sys.path.append('../')
-from models.u_net import UNet
+from models.demand_u_net import DemandUNet
 from data_utils.voice_demand_dataset import VoicebankDemandDataset
 from data_utils.data_loader import FastDataLoader
-from utils.loss import MSE
+from utils.loss import PSA
 from utils.visualizer import show_TF_domein_result
 import numpy as np
 from utils.stft_module import STFTModule
@@ -50,24 +50,21 @@ class DemandUNetRunner():
                                                 batch_size=self.valid_batch_size, 
                                                 shuffle=True)
         
-        self.model = UNet().to(self.device)
-        self.criterion = MSE()
+        self.model = DemandUNet().to(self.device)
+        self.criterion = PSA()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
         self.save_path = cfg['save_path']
         self.early_stopping = EarlyStopping(patience=10)
+        
     def _preprocess(self, noisy, clean):
         with torch.no_grad():
-            noisy_spec = self.stft_module.stft(noisy, pad=True)           
+            noisy_spec = self.stft_module.stft(noisy, pad=False)           
             noisy_amp_spec = taF.complex_norm(noisy_spec)
-            noisy_amp_spec = noisy_amp_spec[:,1:,:]
-            # to normalize
             noisy_mag_spec = self.stft_module.to_normalize_mag(noisy_amp_spec)
-            
-            clean_spec = self.stft_module.stft(clean, pad=True)     
-            clean_amp_spec = taF.complex_norm(clean_spec)     
-            clean_amp_spec = clean_amp_spec[:,1:,:]
+            clean_spec = self.stft_module.stft(clean, pad=False) 
+            clean_amp_spec = taF.complex_norm(clean_spec)
         
-        return noisy_mag_spec, clean_amp_spec, noisy_amp_spec
+        return noisy_mag_spec, clean_spec, noisy_spec, noisy_amp_spec, clean_amp_spec
         
         
     def _run(self, mode=None, data_loader=None):
@@ -75,13 +72,13 @@ class DemandUNetRunner():
         for i, (noisy, clean) in enumerate(data_loader):
             noisy = noisy.to(self.dtype).to(self.device)
             clean = clean.to(self.dtype).to(self.device)
-            noisy_mag_spec, clean_amp_spec, noisy_amp_spec = self._preprocess(noisy, clean)            
+            noisy_mag_spec, clean_spec, noisy_spec, noisy_amp_spec, clean_amp_spec = self._preprocess(noisy, clean)            
             self.model.zero_grad()
-            est_mask = self.model(noisy_mag_spec.unsqueeze(1))
-            est_source = noisy_amp_spec.unsqueeze(1) * est_mask
+            est_mask = self.model(noisy_mag_spec)
+            est_source = noisy_spec * est_mask[...,None]
             
             if mode == 'train' or mode == 'validation':
-                loss = 10 * self.criterion(est_source, clean_amp_spec)
+                loss = self.criterion(est_source, clean_spec)
                 running_loss += loss.data
                 if mode == 'train':
                     loss.backward()
@@ -107,9 +104,9 @@ class DemandUNetRunner():
             with torch.no_grad():
                 tmp_valid_loss, est_source, est_mask, noisy_amp_spec, clean_amp_spec = self._run(mode='validation', data_loader=self.valid_data_loader)
             
-                if self.early_stopping.validation(tmp_valid_loss):
-                    torch.save(self.model.state_dict(), self.save_path + 'u_net{0}.ckpt'.format(epoch + 1))
-                    break
+                # if self.early_stopping.validation(tmp_valid_loss):
+                #     torch.save(self.model.state_dict(), self.save_path + 'u_net{0}.ckpt'.format(epoch + 1))
+                #     break
                 
                 valid_loss = np.append(valid_loss, 
                                        tmp_valid_loss.cpu().clone().numpy())
@@ -119,7 +116,7 @@ class DemandUNetRunner():
                 show_TF_domein_result(train_loss, 
                                       valid_loss, 
                                       noisy_amp_spec[0,:,:],
-                                      est_mask[0,0,:,:],
+                                      est_mask[0,:,:],
                                       est_source[0,0,:,:],
                                       clean_amp_spec[0,:,:])
                 print('plot_time:', time.time() - plot_time)

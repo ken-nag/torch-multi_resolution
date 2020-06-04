@@ -30,7 +30,7 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
             self.wav_names = wav_names[:full_data_num]
         
         elif self.folder_type == 'validation':
-            self.wav_names = wav_names[:-full_data_num]
+            self.wav_names = wav_names[-full_data_num:]
 
         else:
             self.wav_names = wav_names

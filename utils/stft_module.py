@@ -19,15 +19,17 @@ class STFTModule():
         return (np.floor(self.n_fft / 2) + 1).astype(np.int32)
         
     def stft(self, x, pad=None):
+        center = True
         if pad:
-            self.pad = pad
+            self.pad = True
             x = self._stft_zero_pad(x)
+            center = False
             
         return torch.stft(x, 
                           n_fft=self.n_fft,
                           hop_length=self.hop_length, 
                           win_length=self.win_length,
-                          center=None, 
+                          center=center, 
                           window=self.window)
     
     def _stft_zero_pad(self, x):
@@ -54,26 +56,17 @@ class STFTModule():
         half_nfft = self.n_fft // 2
         return x[:, half_nfft:-half_nfft]
         
-     
     def istft(self, x):
-        x = self._istft_zero_pad(x)
+        if self.pad:
+            x = self._istft_zero_pad(x)
+            
         wave  = torchaudio.functional.istft(x, 
                                             n_fft=self.n_fft,
                                             win_length=self.win_length, 
                                             hop_length=self.hop_length,
-                                            window=self.window,
-                                            center=True)
+                                            window=self.window,)
         return wave
             
-    def stft_3D(self, x, pad=None):
-       batch_size, source_num, sig_len = x.shape
-       frame_num = self._cal_frame_num(sig_len)
-       buff = torch.zeros((batch_size, source_num, self.freq_num, frame_num, 2)).to(self.dtype).to(self.device)
-       for i, source in enumerate(x):
-           buff[i, :, :, :, :] = self.stft(source, pad=pad)
-           
-       return buff
-   
     def to_normalize_mag(self, x):
         flooring = 1e-4
         eps = 1e-8

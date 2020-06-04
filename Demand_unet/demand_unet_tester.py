@@ -2,7 +2,7 @@ import torch
 import sys
 import time
 sys.path.append('../')
-from models.u_net import UNet
+from models.demand_u_net import DemandUNet
 from data_utils.voice_demand_dataset import VoicebankDemandDataset
 from data_utils.data_loader import FastDataLoader
 from utils.stft_module import STFTModule
@@ -19,7 +19,7 @@ class DemandUNet_Tester():
         self.eps = 1e-4
         self.eval_path = cfg['eval_path']
         
-        self.model = UNet().to(self.device)
+        self.model = DemandUNet().to(self.device)
         self.model.eval()
         self.model.load_state_dict(torch.load(self.eval_path, map_location=self.device))
         
@@ -42,7 +42,7 @@ class DemandUNet_Tester():
     
     def _preprocess(self, noisy):
         with torch.no_grad():
-            noisy_spec = self.stft_module.stft(noisy, pad=True)
+            noisy_spec = self.stft_module.stft(noisy, pad=None)
             noisy_amp_spec = taF.complex_norm(noisy_spec)
             noisy_amp_spec = noisy_amp_spec[:,1:,:]
             noisy_mag_spec = self.stft_module.to_normalize_mag(noisy_amp_spec)
@@ -65,10 +65,11 @@ class DemandUNet_Tester():
                 noisy = noisy.squeeze(0).to(self.dtype).to(self.device)
                 clean = clean.squeeze(0).to(self.dtype).to(self.device)
                 noisy_mag_spec, noisy_spec = self._preprocess(noisy)
-                est_mask = self.model(noisy_mag_spec.unsqueeze(1))
+                est_mask = self.model(noisy_mag_spec)
                 est_mask = self._postprocess(est_mask)
                 est_source = noisy_spec * est_mask[...,None]
                 est_wave = self.stft_module.istft(est_source)
+                print(est_wave.shape)
                 
                 est_wave = est_wave.flatten()  
                 clean = clean.flatten()

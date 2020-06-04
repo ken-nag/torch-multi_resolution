@@ -1,4 +1,8 @@
 import torch
+
+class PSA():
+    def __call__(self, est, true):
+        return torch.mean(torch.sum(torch.pow(est - true, 2), [-3,-2,-1]))
  
 class MSE():
     def _cal_err(self,est_source, true_source):
