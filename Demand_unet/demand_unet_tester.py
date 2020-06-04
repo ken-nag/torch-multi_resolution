@@ -44,20 +44,10 @@ class DemandUNet_Tester():
         with torch.no_grad():
             noisy_spec = self.stft_module.stft(noisy, pad=None)
             noisy_amp_spec = taF.complex_norm(noisy_spec)
-            noisy_amp_spec = noisy_amp_spec[:,1:,:]
             noisy_mag_spec = self.stft_module.to_normalize_mag(noisy_amp_spec)
             
             return noisy_mag_spec, noisy_spec
-        
-    
-    def _postprocess(self, x):
-        x = x.squeeze(1)
-        batch_size, f_size, t_size = x.shape
-        pad_x = torch.zeros((batch_size, f_size+1, t_size), dtype=self.dtype, device=self.device)
-        pad_x[:,1:, :] = x[:,:,:]
-        return pad_x
-        
-    
+            
     def test(self, mode='test'):
         with torch.no_grad():
             for i, (noisy, clean) in enumerate(self.test_data_loader):
@@ -66,7 +56,6 @@ class DemandUNet_Tester():
                 clean = clean.squeeze(0).to(self.dtype).to(self.device)
                 noisy_mag_spec, noisy_spec = self._preprocess(noisy)
                 est_mask = self.model(noisy_mag_spec)
-                est_mask = self._postprocess(est_mask)
                 est_source = noisy_spec * est_mask[...,None]
                 est_wave = self.stft_module.istft(est_source)
                 print(est_wave.shape)
