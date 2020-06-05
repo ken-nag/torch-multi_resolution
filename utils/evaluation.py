@@ -11,13 +11,15 @@ def si_sdr(est, true):
     return val
 
 
-def sp_enhance_evals(est_source, clean_source, fs):
+def sp_enhance_evals(est_source, clean_source, noisy_source, fs):
     est_source = est_source.cpu().clone().numpy()
     clean_source = clean_source.cpu().clone().numpy()
+    noisy_source = noisy_source.cpu().clone().numpy()
     
     pesq_val = pesq(fs, clean_source, est_source, 'wb')
     stoi_val = stoi(clean_source, est_source, fs, extended=False)
     si_sdr_val = si_sdr(est_source, clean_source)
+    noisy_si_sdr_val = si_sdr(n)
     
     return pesq_val, stoi_val, si_sdr_val
 

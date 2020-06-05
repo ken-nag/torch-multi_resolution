@@ -62,8 +62,9 @@ class DemandUNet_Tester():
                 
                 est_wave = est_wave.flatten()  
                 clean = clean.flatten()
+                noisy = noisy.flatten()
                 
-                pesq_val, stoi_val, si_sdr_val = sp_enhance_evals(est_wave, clean, fs=16000)
+                pesq_val, stoi_val, si_sdr_val = sp_enhance_evals(est_wave, clean, noisy, fs=16000)
                 self.pesq_list = np.append(self.pesq_list, pesq_val)
                 self.stoi_list = np.append(self.stoi_list, stoi_val)
                 self.si_sdr_list = np.append(self.si_sdr_list, si_sdr_val)

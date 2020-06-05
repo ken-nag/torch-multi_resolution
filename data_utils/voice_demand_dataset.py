@@ -34,6 +34,7 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
 
         else:
             self.wav_names = wav_names
+            print(self.wav_names)
             
         
     def _cut_or_pad(self, x):
@@ -78,7 +79,9 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
         if self.shuffle:
             wav_name = random.sample(self.wav_names, 1)[-1]
         else:
+            print(idx)
             wav_name = self.wav_names[idx]
+            print(wav_name)
             
         clean, _ = torchaudio.load(self.clean_root+wav_name)
         noisy, _ = torchaudio.load(self.noisy_root+wav_name)
