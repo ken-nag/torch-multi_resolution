@@ -65,51 +65,35 @@ class DemandUNet_pp_Runner():
         with torch.no_grad():
             noisy_spec = self.stft_module.stft(noisy, pad=False)
             noisy_amp_spec = taF.complex_norm(noisy_spec)
-            # noisy_amp_spec = noisy_amp_spec[:,1:,:]
             noisy_mag_spec = self.stft_module.to_normalize_mag(noisy_amp_spec)
             
             clean_spec = self.stft_module.stft(clean, pad=False)
             clean_amp_spec = taF.complex_norm(clean_spec)
-            # clean_amp_spec = clean_amp_spec[:,1:,:]
             
             #ex1
             ex1_noisy_spec = self.stft_module_ex1.stft(noisy, pad=False)
             ex1_noisy_amp_spec = taF.complex_norm(ex1_noisy_spec)
             ex1_noisy_mag_spec = self.stft_module_ex1.to_normalize_mag(ex1_noisy_amp_spec)
-            # ex1_noisy_mag_spec = ex1_noisy_mag_spec[:,1:,1:513]
-            
             #ex2
             ex2_noisy_spec = self.stft_module_ex2.stft(noisy, pad=False)
             ex2_noisy_amp_spec = taF.complex_norm(ex2_noisy_spec)
             ex2_noisy_mag_spec = self.stft_module_ex2.to_normalize_mag(ex2_noisy_amp_spec)
-            # ex2_noisy_mag_spec = ex2_noisy_mag_spec[:,1:,:]
-            # batch_size, f_size, t_size = ex2_noisy_mag_spec.shape
-            # pad_ex2_noisy_mag_spec = torch.zeros((batch_size, f_size, 128), dtype=self.dtype, device=self.device)
-            # pad_ex2_noisy_mag_spec[:,:1024,:127] = ex2_noisy_mag_spec[:,:,:]
             
-            return noisy_mag_spec, ex1_noisy_mag_spec, ex2_noisy_mag_spec, clean_amp_spec, noisy_amp_spec, noisy_spec
-        
-    # def _postporcess(self, x):
-    #     #padding DC Component
-    #     batch_size, channel_size, f_size, t_size = x.shape
-    #     pad_x = torch.zeros((batch_size, channel_size, f_size+1, t_size), dtype=self.dtype, device=self.device)
-    #     pad_x[:,:,1:, :] = x[:,:,:,:]
-    #     return pad_x
+            return noisy_mag_spec, ex1_noisy_mag_spec, ex2_noisy_mag_spec, clean_amp_spec, noisy_amp_spec, noisy_spec, clean_spec
         
     def _run(self, mode=None, data_loader=None):
         running_loss = 0
         for i, (noisy, clean) in enumerate(data_loader):
             noisy = noisy.to(self.dtype).to(self.device)
             clean = clean.to(self.dtype).to(self.device)
-            noisy_mag_spec, ex1_noisy_mag_spec, ex2_noisy_mag_spec, clean_amp_spec,  noisy_amp_spec, noisy_spec = self._preprocess(noisy, clean)
+            noisy_mag_spec, ex1_noisy_mag_spec, ex2_noisy_mag_spec, clean_amp_spec,  noisy_amp_spec, noisy_spec, clean_spec = self._preprocess(noisy, clean)
             
             self.model.zero_grad()
             est_mask = self.model(noisy_mag_spec, ex1_noisy_mag_spec, ex2_noisy_mag_spec)
-            # est_mask = self._postporcess(est_mask)
-            est_source = noisy_spec.unsqueeze * est_mask[...,None]
+            est_source = noisy_spec * est_mask[...,None]
             
             if mode == 'train' or mode == 'validation':
-                loss = 10 * self.criterion(est_source, clean_amp_spec)
+                loss = 10 * self.criterion(est_source, clean_spec)
                 running_loss += loss.data
                 if mode == 'train':
                     loss.backward()
