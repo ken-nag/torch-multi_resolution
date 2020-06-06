@@ -128,7 +128,7 @@ class DemandUNet_pp_Runner():
                 show_TF_domein_result(train_loss, 
                                       valid_loss,
                                       noisy_amp_spec[0,:,:],
-                                      est_mask[0,0,:,:],
+                                      est_mask[0,:,:],
                                       est_source[0,0,:,:], 
                                       clean_amp_spec[0,:,:])
                 torch.save(self.model.state_dict(), self.save_path + 'u_net{0}.ckpt'.format(epoch + 1))
