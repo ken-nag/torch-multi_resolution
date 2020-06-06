@@ -75,4 +75,10 @@ class DemandUNet(nn.Module):
         est_mask = torch.sigmoid(self.last_conv(x))
         return est_mask[:, 0, :freqs, :frames]
 
-   
+if __name__ == '__main__':
+    model = DemandUNet()
+    params = 0
+    for p in model.parameters():
+        if p.requires_grad:
+            params += p.numel()
+    print('parameters:', params)
