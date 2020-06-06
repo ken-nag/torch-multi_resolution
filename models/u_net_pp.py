@@ -71,3 +71,11 @@ class UNet_pp(nn.Module):
         
         return est_mask
         
+if __name__ == '__main__':
+    from torchsummary import summary
+    model = UNet_pp()
+    params = 0
+    for p in model.parameters():
+        if p.requires_grad:
+            params += p.numel()
+    print('parameters:', params)

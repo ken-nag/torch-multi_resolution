@@ -60,4 +60,15 @@ class UNet(nn.Module):
         est_mask = torch.sigmoid(last_output)
         
         return est_mask
-        
+
+if __name__ == '__main__':
+    from torchsummary import summary
+    
+    model = UNet()
+    params = 0
+    for p in model.parameters():
+        if p.requires_grad:
+            params += p.numel()
+    print('parameters:', params)
+    
+    summary(model, (1,512,256))

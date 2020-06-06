@@ -20,8 +20,8 @@ def sp_enhance_evals(est_source, clean_source, noisy_source, fs):
     stoi_val = stoi(clean_source, est_source, fs, extended=False)
     si_sdr_val = si_sdr(est_source, clean_source)
     noisy_si_sdr_val = si_sdr(noisy_source, clean_source)
-    
-    return pesq_val, stoi_val, si_sdr_val - noisy_si_sdr_val
+    si_sdr_improvement = si_sdr_val -noisy_si_sdr_val
+    return pesq_val, stoi_val, si_sdr_val, si_sdr_improvement
 
 def mss_evals(est_source, est_accompany, true_source, true_accompany):
     est_source = est_source.to('cpu').detach().numpy().copy()
