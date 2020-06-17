@@ -112,9 +112,9 @@ class DemandUNet_p2_Runner():
             with torch.no_grad():
                 tmp_valid_loss, est_source, est_mask, noisy_amp_spec, clean_amp_spec = self._run(mode='validation', data_loader=self.valid_data_loader)
             
-                if self.early_stopping.validation(tmp_valid_loss):
-                    torch.save(self.model.state_dict(), self.save_path + 'u_net{0}.ckpt'.format(epoch + 1))
-                    break
+                # if self.early_stopping.validation(tmp_valid_loss):
+                #     torch.save(self.model.state_dict(), self.save_path + 'u_net{0}.ckpt'.format(epoch + 1))
+                #     break
                 
                 valid_loss = np.append(valid_loss, 
                                        tmp_valid_loss.cpu().clone().numpy())
