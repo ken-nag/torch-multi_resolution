@@ -75,6 +75,7 @@ class DemandCNNBLSTM_Tester():
             print('pesq mean:', np.mean(self.pesq_list))
             print('stoi mean:', np.mean(self.stoi_list))
             print('si-sdr mean:', np.mean(self.si_sdr_list))
+            print('sdr improve mean:', np.mean(self.si_sdr_improve_list))
             
             print('pesq median:', np.median(self.pesq_list))
             print('stoi median:', np.median(self.stoi_list))
