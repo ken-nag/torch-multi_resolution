@@ -24,7 +24,7 @@ class CNNBLSTM(nn.Module):
         
         self.blstm_block = nn.LSTM(input_size=self.f_size,
                                    hidden_size=self.hidden_dim,
-                                   num_layers=1,
+                                   num_layers=2,
                                    bidirectional=True, 
                                    batch_first=True)
         
