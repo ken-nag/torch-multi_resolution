@@ -12,13 +12,21 @@ class BLSTM2(nn.Module):
                                    bidirectional=True, 
                                    batch_first=True)
         
-        self.last_linear = nn.Linear(in_features=self.hidden_dim*2, out_features=self.f_size)
+        self.last_linear = nn.Linear(in_features=self.hidden_size*2, out_features=self.f_size)
         
     def forward(self, xin):
         xin = xin.permute(0, 2, 1)
-        blstm_out  = self.blstm_block(xin)
+        blstm_out, _  = self.blstm_block(xin)
         last_out = self.last_linear(blstm_out)
         mask = torch.sigmoid(last_out)
         mask = mask.permute(0, 2, 1)
         
         return mask
+
+if __name__ == '__main__':
+    model = BLSTM2(513)
+    params = 0
+    for p in model.parameters():
+        if p.requires_grad:
+            params += p.numel()
+    print('parameters:', params)
