@@ -2,7 +2,7 @@ import torch
 import sys
 import time
 sys.path.append('../')
-from models.demand_cnn_blstm import CNNBLSTM
+from models.featextractor_blstm import FeatExtractorBlstm
 from data_utils.voice_demand_dataset import VoicebankDemandDataset
 from data_utils.data_loader import FastDataLoader
 from utils.loss import PSA
@@ -15,7 +15,7 @@ import torchaudio.functional as taF
 from IPython import get_ipython
 get_ipython().run_line_magic('matplotlib', 'inline')
 
-class DemandCNNBLSTMRunner():
+class DemandFeatExtractorBLSTMRunner():
     def __init__(self, cfg):
         
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -50,7 +50,7 @@ class DemandCNNBLSTMRunner():
                                                 batch_size=self.valid_batch_size, 
                                                 shuffle=True)
         
-        self.model = CNNBLSTM(f_size=513).to(self.device)
+        self.model = FeatExtractorBlstm(f_size=513).to(self.device)
         self.criterion = PSA()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
         self.save_path = cfg['save_path']
@@ -127,6 +127,6 @@ class DemandCNNBLSTMRunner():
             print('----excute time: {0}'.format(end - start))
                         
 if __name__ == '__main__':
-    from configs.demand_cnn_blstm_config_1 import train_cfg
-    obj = DemandCNNBLSTMRunner(train_cfg)
+    from configs.demand_featextractor_blstm_config_1 import train_cfg
+    obj = DemandFeatExtractorBLSTMRunner(train_cfg)
     obj.train()
