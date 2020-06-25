@@ -2,7 +2,7 @@ import torch
 import sys
 import time
 sys.path.append('../')
-from models.demand_cnn_blstm import CNNBLSTM
+from models.featextractor_blstm import FeatExtractorBlstm
 from data_utils.voice_demand_dataset import VoicebankDemandDataset
 from data_utils.data_loader import FastDataLoader
 from utils.stft_module import STFTModule
@@ -12,14 +12,14 @@ import numpy as np
 from IPython import get_ipython
 get_ipython().run_line_magic('matplotlib', 'inline')
 
-class DemandCNNBLSTM_Tester():
+class DemandFeatExtractorBLSTMTester():
     def __init__(self, cfg):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.dtype= torch.float32
         self.eps = 1e-4
         self.eval_path = cfg['eval_path']
         
-        self.model = CNNBLSTM(513).to(self.device)
+        self.model =  FeatExtractorBlstm(f_size=513).to(self.device)
         self.model.eval()
         self.model.load_state_dict(torch.load(self.eval_path, map_location=self.device))
         
@@ -83,6 +83,6 @@ class DemandCNNBLSTM_Tester():
         
 
 if __name__ == '__main__':
-    from configs.demand_cnn_blstm_config_1 import test_cfg
-    obj = DemandCNNBLSTM_Tester(test_cfg)
+    from configs.demand_featextractor_blstm_config_1 import test_cfg
+    obj = DemandFeatExtractorBLSTMTester(test_cfg)
     obj.test()
