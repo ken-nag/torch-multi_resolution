@@ -21,12 +21,12 @@ class FeatExtractorBlstm(nn.Module):
         self.compressor = self._encoder(channels=(60,1), kernel_size=(1,1), stride=(1,1))
         
         self.blstm_block = nn.LSTM(input_size=self.f_size,
-                                   hidden_size=self.hidden_size,
+                                   hidden_size=self.f_size*2,
                                    num_layers=2,
                                    bidirectional=True, 
                                    batch_first=True)
         
-        self.last_linear = nn.Linear(in_features=self.hidden_size*2, out_features=self.f_size)
+        self.last_linear = nn.Linear(in_features=self.hidden_size*4, out_features=self.f_size)
     
         
     def _encoder(self, channels, kernel_size, stride):

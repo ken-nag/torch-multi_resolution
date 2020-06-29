@@ -9,7 +9,7 @@ class STFTModule():
         self.n_fft = stft_params['n_fft']
         self.hop_length = stft_params['hop_length']
         self.win_length = stft_params['win_length']
-        self.window = torch.hann_window(self.n_fft).to(self.dtype).to(self.device)
+        self.window = torch.hann_window(self.win_length).to(self.dtype).to(self.device)
         self.freq_num = self._cal_freq_num()
         self.pad = None
         self.pad_len = None

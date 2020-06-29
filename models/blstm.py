@@ -7,12 +7,12 @@ class BLSTM2(nn.Module):
         self.hidden_size = 400
         self.f_size = f_size
         self.blstm_block = nn.LSTM(input_size=self.f_size,
-                                   hidden_size=self.hidden_size,
-                                   num_layers=2,
-                                   bidirectional=True, 
-                                   batch_first=True)
+                                    hidden_size=self.f_size*2,
+                                    num_layers=2,
+                                    bidirectional=True, 
+                                    batch_first=True)
         
-        self.last_linear = nn.Linear(in_features=self.hidden_size*2, out_features=self.f_size)
+        self.last_linear = nn.Linear(in_features=self.f_size*4, out_features=self.f_size)
         
     def forward(self, xin):
         xin = xin.permute(0, 2, 1)
@@ -24,7 +24,7 @@ class BLSTM2(nn.Module):
         return mask
 
 if __name__ == '__main__':
-    model = BLSTM2(513)
+    model = BLSTM2(257)
     params = 0
     for p in model.parameters():
         if p.requires_grad:
