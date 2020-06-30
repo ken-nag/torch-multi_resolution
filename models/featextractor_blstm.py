@@ -3,73 +3,82 @@ import torch.nn as nn
 import numpy as np
 
 class FeatExtractorBlstm(nn.Module):
-    def __init__(self, f_size):
+    def __init__(self, cfg):
         super().__init__()
-        self.f_size = f_size
-        self.kernel_size = [(5,5), (5,5)]
-        self.stride = [(1,1), (1,1)]
-        self.encoder_channels = [(1,30), (30,60)]
-        self.encoder_depth = len(self.encoder_channels)
-        self.hidden_size = 400
+        self.f_size = cfg['f_size']
         
-        self.encoders = nn.ModuleList()
-        for i in range(self.encoder_depth):
-            self.encoders.append(self._encoder(self.encoder_channels[i],
-                                               self.kernel_size[i],
-                                               self.stride[i],))
+        self.kernel = cfg['kernel']
+        self.stride = cfg['stride']
+        self.channel = cfg['channel']
+
+        self.mix_kernel=cfg['mix_kernel']
+        self.mix_stride=cfg['mix_stride']
+        self.mix_channel=cfg['mix_channel']
         
-        self.compressor = self._encoder(channels=(60,1), kernel_size=(1,1), stride=(1,1))
+        self.hidden_size = cfg['hidden_size']
         
-        self.blstm_block = nn.LSTM(input_size=self.f_size,
-                                   hidden_size=self.f_size*2,
+        self.encoder = self._encoder(channels=self.channel, kernel_size=self.kernel, stride=self.stride)
+        self.mix_encoder = self._encoder(channels=self.mix_channel, kernel_size=self.mix_stride, stride=self.mix_stride)
+        self.compressor = self._encoder(channels=(self.mix_channel[1],1), kernel_size=(1,1), stride=(1,1))
+        
+        blstm_input_size = int(np.ceil(self.f_size/self.stride[0]))
+        self.blstm_block = nn.LSTM(input_size=blstm_input_size,
+                                   hidden_size=blstm_input_size*2,
                                    num_layers=2,
                                    bidirectional=True, 
                                    batch_first=True)
         
-        self.last_linear = nn.Linear(in_features=self.hidden_size*4, out_features=self.f_size)
+        self.last_linear = nn.Linear(in_features=blstm_input_size*4, out_features=self.f_size)
     
         
     def _encoder(self, channels, kernel_size, stride):
-        padding = self._padding(kernel_size)
+        padding = self._kernel_pad(kernel_size)
         return nn.Conv2d(in_channels=channels[0],
                          out_channels=channels[1],
                          kernel_size=kernel_size,
                          stride=stride,
                          padding=padding)
-        
-        
-    def _pre_pad(self, x):
-        bn, fn, tn = x.shape
-        base_fn = (self.stride[0][0])**(len(self.encoders))
-        base_tn = (self.stride[0][1])**(len(self.encoders))
-        pad_fn = int(np.ceil((fn-1)/base_fn)*base_fn) + 1 - fn
-        pad_tn = int(np.ceil((tn-1)/base_tn)*base_tn) + 1 - tn
-        x = torch.cat((x, torch.zeros((bn, fn, pad_tn), dtype=x.dtype, device=x.device)),axis=2)
-        x = torch.cat((x, torch.zeros((bn, pad_fn, tn+pad_tn), dtype=x.dtype, device=x.device)), axis=1)
-        return x, fn, tn
     
-    def _padding(self, kernel_size):
+    def _stride_pad(self, x, stride):
+        batch, channel, freq, time = x.shape
+        stride_f = self.stride[0]
+        stride_t = self.stride[1]
+        pad_f = int(np.ceil((freq-1)/stride_f)*stride_f) + 1 - freq
+        pad_t = int(np.ceil((time-1)/stride_t)*stride_t) + 1 - time
+        x = torch.cat((x, torch.zeros((batch, channel, freq, pad_t), dtype=x.dtype, device=x.device)),axis=3)
+        x = torch.cat((x, torch.zeros((batch, channel, pad_f, time+pad_t), dtype=x.dtype, device=x.device)), axis=2)
+        return x
+    
+    def _kernel_pad(self, kernel_size):
         return [(i - 1) // 2 for i in kernel_size]
-        
+    
     def forward(self,xin):
-        xpad, freqs, frames = self._pre_pad(xin)
-        xpad = xpad.permute(0,2,1)#(batch, T, F)
-        xpad  = xpad.unsqueeze(1)#(batch, channel T, F)
-        encoder_out = xpad
-        for i in range(self.encoder_depth):   
-            encoder_out = self.encoders[i](encoder_out)
-        
-        compressor_out = self.compressor(encoder_out)
+        batch, freq, time = xin.shape
+       
+        xin = xin.unsqueeze(1)
+     
+        encoder_out = self.encoder(self._stride_pad(xin, self.stride))
+        mix_encoder_out = self.mix_encoder(self._stride_pad(encoder_out, self.mix_stride))
+        compressor_out = self.compressor(mix_encoder_out)
         compressor_out = compressor_out.squeeze(1)#(batch, T, F)
+        compressor_out = compressor_out.permute(0,2,1)
         blstm_out, _ = self.blstm_block(compressor_out)
-        
         last = self.last_linear(blstm_out)
         mask = last.permute(0,2,1)
         mask = torch.sigmoid(mask)
         return mask
+
     
 if __name__ == '__main__':
-    model = FeatExtractorBlstm(513)
+    dnn_cfg = {'dnn_cfg': {'f_size': int(2048/2) + 1, 
+                      'kernel': (5,5), 
+                      'stride': (2,1), 
+                      'channel': (1,30),
+                      'mix_kernel': (5,5),
+                      'mix_stride': (1,1),
+                      'mix_channel': (30, 60),
+                      'hidden_size': 400}}
+    model = FeatExtractorBlstm(dnn_cfg['dnn_cfg'])
     params = 0
     for p in model.parameters():
         if p.requires_grad:

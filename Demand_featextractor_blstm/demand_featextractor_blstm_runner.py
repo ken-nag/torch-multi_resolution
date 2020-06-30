@@ -50,7 +50,7 @@ class DemandFeatExtractorBLSTMRunner():
                                                 batch_size=self.valid_batch_size, 
                                                 shuffle=True)
         
-        self.model = FeatExtractorBlstm(f_size=513).to(self.device)
+        self.model = FeatExtractorBlstm(cfg['dnn_cfg']).to(self.device)
         self.criterion = PSA()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
         self.save_path = cfg['save_path']
@@ -127,6 +127,6 @@ class DemandFeatExtractorBLSTMRunner():
             print('----excute time: {0}'.format(end - start))
                         
 if __name__ == '__main__':
-    from configs.demand_featextractor_blstm_config_1 import train_cfg
+    from configs.demand_featextractor_blstm_config_2 import train_cfg
     obj = DemandFeatExtractorBLSTMRunner(train_cfg)
     obj.train()
