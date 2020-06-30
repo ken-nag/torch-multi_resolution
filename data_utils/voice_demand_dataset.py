@@ -53,7 +53,7 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
         if x_len >= self.sample_len:
             x = self._crop_per_segment(x)
         else:
-            print("detect x < 66304")
+            print("detect x < {0}".format(self.sample_len))
             x = self._zero_pad(x)
             x = x.unsqueeze(0)
         return x
