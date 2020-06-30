@@ -86,7 +86,21 @@ class FeatExtractorBlstm_pp(nn.Module):
         return mask
     
 if __name__ == '__main__':
-    model = FeatExtractorBlstm_pp(513)
+    dnn_cfg = {'dnn_cfg': {'f_size': int(2048/2) + 1, 
+                           'kernel': (5,5), 
+                           'stride': (2,1), 
+                           'channel': (1,10),
+                           'ex1_kernel': (5,5),
+                           'ex1_stride': (2,1),
+                           'ex1_channel': (1,10),
+                           'ex2_kernel': (5,5),
+                           'ex2_stride': (2,1),
+                           'ex2_channel': (1,10),
+                           'mix_kernel': (5,5),
+                           'mix_stride': (1,1),
+                           'mix_channel': (30, 60),
+                           'hidden_size': 400}}
+    model = FeatExtractorBlstm_pp(dnn_cfg['dnn_cfg'])
     params = 0
     for p in model.parameters():
         if p.requires_grad:

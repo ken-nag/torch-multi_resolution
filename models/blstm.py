@@ -24,7 +24,7 @@ class BLSTM2(nn.Module):
         return mask
 
 if __name__ == '__main__':
-    model = BLSTM2(257)
+    model = BLSTM2(512)
     params = 0
     for p in model.parameters():
         if p.requires_grad:
