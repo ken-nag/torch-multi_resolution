@@ -2,17 +2,17 @@ import torch
 import torch.nn as nn
 
 class BLSTM2(nn.Module):
-    def __init__(self, f_size):
+    def __init__(self, cfg):
         super().__init__()
-        self.hidden_size = 400
-        self.f_size = f_size
+        self.f_size = cfg['f_size']
+        self.hidden_size = cfg['hidden_size']
         self.blstm_block = nn.LSTM(input_size=self.f_size,
-                                    hidden_size=self.f_size*2,
+                                    hidden_size=self.hidden_size,
                                     num_layers=2,
                                     bidirectional=True, 
                                     batch_first=True)
         
-        self.last_linear = nn.Linear(in_features=self.f_size*4, out_features=self.f_size)
+        self.last_linear = nn.Linear(in_features=self.hidden_size*2, out_features=self.f_size)
         
     def forward(self, xin):
         xin = xin.permute(0, 2, 1)
