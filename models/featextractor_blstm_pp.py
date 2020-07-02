@@ -33,12 +33,12 @@ class FeatExtractorBlstm_pp(nn.Module):
         
         blstm_input_size = int(np.ceil(self.f_size/self.stride[0]))
         self.blstm_block = nn.LSTM(input_size=blstm_input_size,
-                                   hidden_size=blstm_input_size*2,
+                                   hidden_size=self.hidden_size,
                                    num_layers=2,
                                    bidirectional=True, 
                                    batch_first=True)
         
-        self.last_linear = nn.Linear(in_features=blstm_input_size*4, out_features=self.f_size)
+        self.last_linear = nn.Linear(in_features=self.hidden_size*2, out_features=self.f_size)
     
         
     def _encoder(self, channels, kernel_size, stride):
@@ -87,19 +87,20 @@ class FeatExtractorBlstm_pp(nn.Module):
     
 if __name__ == '__main__':
     dnn_cfg = {'dnn_cfg': {'f_size': int(2048/2) + 1, 
-                           'kernel': (5,5), 
-                           'stride': (2,1), 
-                           'channel': (1,10),
-                           'ex1_kernel': (5,5),
-                           'ex1_stride': (2,1),
-                           'ex1_channel': (1,10),
-                           'ex2_kernel': (5,5),
-                           'ex2_stride': (2,1),
-                           'ex2_channel': (1,10),
-                           'mix_kernel': (5,5),
-                           'mix_stride': (1,1),
-                           'mix_channel': (30, 60),
-                           'hidden_size': 400}}
+                          'kernel': (9,9), 
+                          'stride': (2,1), 
+                          'channel': (1,10),
+                          'ex1_kernel': (27,3),
+                          'ex1_stride': (2,1),
+                          'ex1_channel': (1,10),
+                          'ex2_kernel': (3,27),
+                          'ex2_stride': (2,1),
+                          'ex2_channel': (1,10),
+                          'mix_kernel': (5,15),
+                          'mix_stride': (1,1),
+                          'mix_channel': (30, 60),
+                          'hidden_size': 400}}
+
     model = FeatExtractorBlstm_pp(dnn_cfg['dnn_cfg'])
     params = 0
     for p in model.parameters():
