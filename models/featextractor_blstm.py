@@ -33,11 +33,12 @@ class FeatExtractorBlstm(nn.Module):
         
     def _encoder(self, channels, kernel_size, stride):
         padding = self._kernel_pad(kernel_size)
-        return nn.Conv2d(in_channels=channels[0],
-                         out_channels=channels[1],
-                         kernel_size=kernel_size,
-                         stride=stride,
-                         padding=padding)
+        return nn.Sequential(nn.Conv2d(in_channels=channels[0],
+                                       out_channels=channels[1],
+                                       kernel_size=kernel_size,
+                                       stride=stride,
+                                       padding=padding),
+                             nn.BatchNorm2d(channels[1]))
     
     def _stride_pad(self, x, stride):
         batch, channel, freq, time = x.shape
