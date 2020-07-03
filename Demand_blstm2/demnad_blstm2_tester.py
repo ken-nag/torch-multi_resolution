@@ -19,7 +19,7 @@ class Demand_BLSTM2_Tester():
         self.eps = 1e-4
         self.eval_path = cfg['eval_path']
         
-        self.model = BLSTM2(513).to(self.device)
+        self.model = BLSTM2(cfg['dnn_cfg']).to(self.device)
         self.model.eval()
         self.model.load_state_dict(torch.load(self.eval_path, map_location=self.device))
         
@@ -77,7 +77,7 @@ class Demand_BLSTM2_Tester():
         
 
 if __name__ == '__main__':
-    from configs.demand_blstm2_config_1 import test_cfg
+    from configs.demand_blstm2_config_2 import test_cfg
     
     obj = Demand_BLSTM2_Tester(test_cfg)
     obj.test()
