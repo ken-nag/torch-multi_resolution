@@ -65,17 +65,18 @@ class DemandFeatExtractorBLSTM_pp_Tester():
         with torch.no_grad():
             for i, (noisy, clean) in enumerate(self.test_data_loader):
                 start = time.time()
-                noisy = noisy.squeeze(0).to(self.dtype).to(self.device)
-                clean = clean.squeeze(0).to(self.dtype).to(self.device)
+                noisy = noisy.to(self.dtype).to(self.device)
+                clean = clean.to(self.dtype).to(self.device)
+                siglen = noisy.shape[1]
                 noisy_mag_spec, ex1_noisy_mag_spec, ex2_noisy_mag_spec, noisy_spec = self._preprocess(noisy)
                 est_mask = self.model(noisy_mag_spec, ex1_noisy_mag_spec, ex2_noisy_mag_spec)
                 est_source = noisy_spec * est_mask[...,None]
-                est_wave = self.stft_module.istft(est_source)
-                
-                est_wave = est_wave.flatten()  
-                clean = clean.flatten()
-                noisy = noisy.flatten()
-                
+                est_wave = self.stft_module.istft(est_source, siglen)
+                print(est_wave.shape)
+                est_wave = est_wave.squeeze(0)
+                clean = clean.squeeze(0)
+                noisy = noisy.squeeze(0)
+                                
                 pesq_val, stoi_val, si_sdr_val, si_sdr_improve = sp_enhance_evals(est_wave, clean, noisy, fs=16000)
                 self.pesq_list = np.append(self.pesq_list, pesq_val)
                 self.stoi_list = np.append(self.stoi_list, stoi_val)
@@ -90,6 +91,6 @@ class DemandFeatExtractorBLSTM_pp_Tester():
         
 
 if __name__ == '__main__':
-    from configs.demand_featextractor_blstm_pp_config_1 import test_cfg
+    from configs.demand_featextractor_blstm_pp_config_3 import test_cfg
     obj = DemandFeatExtractorBLSTM_pp_Tester(test_cfg)
     obj.test()
