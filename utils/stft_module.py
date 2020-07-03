@@ -56,14 +56,18 @@ class STFTModule():
         half_nfft = self.n_fft // 2
         return x[:, half_nfft:-half_nfft]
         
-    def istft(self, x):
+    def istft(self, x, siglen=None):
+        center = True
         if self.pad:
             x = self._istft_zero_pad(x)
+            center = False
             
         wave  = torchaudio.functional.istft(x, 
                                             n_fft=self.n_fft,
                                             win_length=self.win_length, 
                                             hop_length=self.hop_length,
+                                            center=center,
+                                            length=siglen,
                                             window=self.window,)
         return wave
             
