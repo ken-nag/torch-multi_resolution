@@ -53,6 +53,8 @@ class DemandFeatExtractorBLSTMTester():
         with torch.no_grad():
             for i, (noisy, clean) in enumerate(self.test_data_loader):
                 start = time.time()
+                noisy = noisy.to(self.dtype).to(self.device)
+                clean = clean.to(self.dtype).to(self.device)
                 siglen = noisy.shape[1]
                 noisy_mag_spec, noisy_spec = self._preprocess(noisy)
                 est_mask = self.model(noisy_mag_spec)
