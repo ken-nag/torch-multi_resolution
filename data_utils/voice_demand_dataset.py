@@ -94,8 +94,10 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
             noisy = self._cut_or_pad(noisy)
             
         if self.folder_type == 'test':
-            clean = self._crop_or_pad(clean)
-            noisy = self._crop_or_pad(noisy)
+            clean = clean.unsqueeze(0)
+            noisy = noisy.unsqueeze(0)
+            # clean = self._crop_or_pad(clean)
+            # noisy = self._crop_or_pad(noisy)
             
     
         return noisy, clean    
