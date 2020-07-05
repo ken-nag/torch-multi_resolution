@@ -10,14 +10,14 @@ class FeatExtractorBlstm(nn.Module):
         self.kernel = cfg['kernel']
         self.stride = cfg['stride']
         self.channel = cfg['channel']
-
+        self.dilation = cfg['dilation']
         self.mix_kernel=cfg['mix_kernel']
         self.mix_stride=cfg['mix_stride']
         self.mix_channel=cfg['mix_channel']
         
         self.hidden_size = cfg['hidden_size']
         self.leakiness = 0.2
-        self.encoder = self._encoder(channels=self.channel, kernel_size=self.kernel, stride=self.stride)
+        self.encoder = self._encoder(channels=self.channel, kernel_size=self.kernel, stride=self.stride, dilation=self.dilation)
         self.mix_encoder = self._encoder(channels=self.mix_channel, kernel_size=self.mix_stride, stride=self.mix_stride)
         self.compressor = self._encoder(channels=(self.mix_channel[1],1), kernel_size=(1,1), stride=(1,1))
         
@@ -31,12 +31,13 @@ class FeatExtractorBlstm(nn.Module):
         self.last_linear = nn.Linear(in_features=self.hidden_size*2, out_features=self.f_size)
     
         
-    def _encoder(self, channels, kernel_size, stride):
-        padding = self._kernel_pad(kernel_size)
+    def _encoder(self, channels, kernel_size, stride, dilation=1):
+        padding = self._kernel_and_dilation_pad(kernel_size, dilation)
         return nn.Sequential(nn.Conv2d(in_channels=channels[0],
                                        out_channels=channels[1],
                                        kernel_size=kernel_size,
                                        stride=stride,
+                                       dilation=dilation,
                                        padding=padding),
                              nn.BatchNorm2d(channels[1]),
                              nn.LeakyReLU(self.leakiness))
@@ -51,8 +52,8 @@ class FeatExtractorBlstm(nn.Module):
         x = torch.cat((x, torch.zeros((batch, channel, pad_f, time+pad_t), dtype=x.dtype, device=x.device)), axis=2)
         return x
     
-    def _kernel_pad(self, kernel_size):
-        return [(i - 1) // 2 for i in kernel_size]
+    def _kernel_and_dilation_pad(self, kernel_size, dilation):
+        return [((i + (i-1)*(dilation - 1) - 1) // 2) for i in kernel_size]
     
     def forward(self,xin):
         batch, freq, time = xin.shape
