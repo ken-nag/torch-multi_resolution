@@ -39,6 +39,7 @@ class DemandUNet_Tester():
         self.stoi_list = np.array([])
         self.pesq_list = np.array([])
         self.si_sdr_list = np.array([])
+        self.si_sdr_improve_list = np.array([])
     
     def _preprocess(self, noisy):
         with torch.no_grad():
@@ -52,27 +53,33 @@ class DemandUNet_Tester():
         with torch.no_grad():
             for i, (noisy, clean) in enumerate(self.test_data_loader):
                 start = time.time()
-                noisy = noisy.squeeze(0).to(self.dtype).to(self.device)
-                clean = clean.squeeze(0).to(self.dtype).to(self.device)
+                noisy = noisy.to(self.dtype).to(self.device)
+                clean = clean.to(self.dtype).to(self.device)
+                siglen = noisy.shape[1]
                 noisy_mag_spec, noisy_spec = self._preprocess(noisy)
                 est_mask = self.model(noisy_mag_spec)
                 est_source = noisy_spec * est_mask[...,None]
-                est_wave = self.stft_module.istft(est_source)
+                est_wave = self.stft_module.istft(est_source, siglen)
                 print(est_wave.shape)
+                est_wave = est_wave.squeeze(0)
+                clean = clean.squeeze(0)
+                noisy = noisy.squeeze(0)
                 
-                est_wave = est_wave.flatten()  
-                clean = clean.flatten()
-                noisy = noisy.flatten()
+                # est_wave = est_wave.flatten()  
+                # clean = clean.flatten()
+                # noisy = noisy.flatten()
                 
-                pesq_val, stoi_val, si_sdr_val = sp_enhance_evals(est_wave, clean, noisy, fs=16000)
+                pesq_val, stoi_val, si_sdr_val, si_sdr_improve = sp_enhance_evals(est_wave, clean, noisy, fs=16000)
                 self.pesq_list = np.append(self.pesq_list, pesq_val)
                 self.stoi_list = np.append(self.stoi_list, stoi_val)
                 self.si_sdr_list = np.append(self.si_sdr_list, si_sdr_val)
+                self.si_sdr_improve_list = np.append(self.si_sdr_improve_list, si_sdr_improve)
                 print('test time:', time.time() - start)
                 
             print('pesq mean:', np.mean(self.pesq_list))
             print('stoi mean:', np.mean(self.stoi_list))
             print('si-sdr mean:', np.mean(self.si_sdr_list))
+            print('sdr improve mean:', np.mean(self.si_sdr_improve_list))
             
             print('pesq median:', np.median(self.pesq_list))
             print('stoi median:', np.median(self.stoi_list))

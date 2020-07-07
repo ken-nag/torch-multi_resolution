@@ -64,11 +64,7 @@ class DemandFeatExtractorBLSTMTester():
                 est_wave = est_wave.squeeze(0)
                 clean = clean.squeeze(0)
                 noisy = noisy.squeeze(0)
-                
-                # est_wave = est_wave.flatten()  
-                # clean = clean.flatten()
-                # noisy = noisy.flatten()
-                
+                                
                 pesq_val, stoi_val, si_sdr_val, si_sdr_improve = sp_enhance_evals(est_wave, clean, noisy, fs=16000)
                 self.pesq_list = np.append(self.pesq_list, pesq_val)
                 self.stoi_list = np.append(self.stoi_list, stoi_val)
