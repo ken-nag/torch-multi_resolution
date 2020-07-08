@@ -39,8 +39,7 @@ class FeatExtractorBlstm(nn.Module):
                                        stride=stride,
                                        dilation=dilation,
                                        padding=padding),
-                             nn.BatchNorm2d(channels[1]),
-                             nn.LeakyReLU(self.leakiness))
+                             nn.BatchNorm2d(channels[1]))
     
     def _stride_pad(self, x, stride):
         batch, channel, freq, time = x.shape
