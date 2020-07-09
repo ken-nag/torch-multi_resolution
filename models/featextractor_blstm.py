@@ -19,7 +19,7 @@ class FeatExtractorBlstm(nn.Module):
         self.leakiness = 0.2
         self.encoder = self._encoder(channels=self.channel, kernel_size=self.kernel, stride=self.stride, dilation=self.dilation)
         self.mix_encoder = self._encoder(channels=self.mix_channel, kernel_size=self.mix_stride, stride=self.mix_stride, dilation=self.mix_dilation)
-        self.compressor = self._encoder(channels=(self.mix_channel[1],1), kernel_size=(1,1), stride=(1,1))
+        self.compressor = self._encoder(channels=(self.mix_channel[1],1), kernel_size=(1,1), stride=(1,1))z
         
         blstm_input_size = int(np.ceil(self.f_size/self.stride[0]))
         self.blstm_block = nn.LSTM(input_size=blstm_input_size,
@@ -39,7 +39,7 @@ class FeatExtractorBlstm(nn.Module):
                                        stride=stride,
                                        dilation=dilation,
                                        padding=padding),
-                             nn.BatchNorm2d(channels[1]))
+                             nn.InstanceNorm2d(channels[1]))
     
     def _stride_pad(self, x, stride):
         batch, channel, freq, time = x.shape
