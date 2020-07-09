@@ -16,13 +16,15 @@ class FeatExtractorBlstm(nn.Module):
         self.mix_channel=cfg['mix_channel']
         self.mix_dilation=cfg['mix_dilation']
         self.hidden_size = cfg['hidden_size']
+        self.first_linear_out = cfg['first_linear_out']
         self.leakiness = 0.2
+        
         self.encoder = self._encoder(channels=self.channel, kernel_size=self.kernel, stride=self.stride, dilation=self.dilation)
         self.mix_encoder = self._encoder(channels=self.mix_channel, kernel_size=self.mix_stride, stride=self.mix_stride, dilation=self.mix_dilation)
-        self.compressor = self._encoder(channels=(self.mix_channel[1],1), kernel_size=(1,1), stride=(1,1))z
-        
-        blstm_input_size = int(np.ceil(self.f_size/self.stride[0]))
-        self.blstm_block = nn.LSTM(input_size=blstm_input_size,
+        self.compressor = self._encoder(channels=(self.mix_channel[1],1), kernel_size=(1,1), stride=(1,1))
+        first_linear_in = int(np.ceil(self.f_size/self.stride[0]))
+        self.first_linear = nn.Linear(in_features=first_linear_in, out_features=self.first_linear_out)
+        self.blstm_block = nn.LSTM(input_size=self.first_linear_out,
                                    hidden_size=self.hidden_size,
                                    num_layers=2,
                                    bidirectional=True, 
@@ -64,7 +66,8 @@ class FeatExtractorBlstm(nn.Module):
         compressor_out = self.compressor(mix_encoder_out)
         compressor_out = compressor_out.squeeze(1)#(batch, T, F)
         compressor_out = compressor_out.permute(0,2,1)
-        blstm_out, _ = self.blstm_block(compressor_out)
+        first_linear_out = self.first_linear(compressor_out)
+        blstm_out, _ = self.blstm_block(first_linear_out)
         last = self.last_linear(blstm_out)
         mask = last.permute(0,2,1)
         mask = torch.sigmoid(mask)
