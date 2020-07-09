@@ -14,11 +14,11 @@ class FeatExtractorBlstm(nn.Module):
         self.mix_kernel=cfg['mix_kernel']
         self.mix_stride=cfg['mix_stride']
         self.mix_channel=cfg['mix_channel']
-        
+        self.mix_dilation=cfg['mix_dilation']
         self.hidden_size = cfg['hidden_size']
         self.leakiness = 0.2
         self.encoder = self._encoder(channels=self.channel, kernel_size=self.kernel, stride=self.stride, dilation=self.dilation)
-        self.mix_encoder = self._encoder(channels=self.mix_channel, kernel_size=self.mix_stride, stride=self.mix_stride)
+        self.mix_encoder = self._encoder(channels=self.mix_channel, kernel_size=self.mix_stride, stride=self.mix_stride, dilation=self.mix_dilation)
         self.compressor = self._encoder(channels=(self.mix_channel[1],1), kernel_size=(1,1), stride=(1,1))
         
         blstm_input_size = int(np.ceil(self.f_size/self.stride[0]))
