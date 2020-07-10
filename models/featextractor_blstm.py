@@ -11,10 +11,12 @@ class FeatExtractorBlstm(nn.Module):
         self.stride = cfg['stride']
         self.channel = cfg['channel']
         self.dilation = cfg['dilation']
+        
         self.mix_kernel=cfg['mix_kernel']
         self.mix_stride=cfg['mix_stride']
         self.mix_channel=cfg['mix_channel']
         self.mix_dilation=cfg['mix_dilation']
+        
         self.hidden_size = cfg['hidden_size']
         self.first_linear_out = cfg['first_linear_out']
         self.leakiness = 0.2

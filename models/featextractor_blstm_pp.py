@@ -14,21 +14,25 @@ class FeatExtractorBlstm_pp(nn.Module):
         self.ex1_kernel=cfg['ex1_kernel']
         self.ex1_stride=cfg['ex1_stride']
         self.ex1_channel=cfg['ex1_channel']
+        self.ex1_dilation=cfg['ex1_dilation']
         
         self.ex2_kernel=cfg['ex2_kernel']
         self.ex2_stride=cfg['ex2_stride']
         self.ex2_channel=cfg['ex2_channel']
+        self.ex2_dilation=cfg['ex2_dilation']
         
         self.mix_kernel=cfg['mix_kernel']
         self.mix_stride=cfg['mix_stride']
         self.mix_channel=cfg['mix_channel']
+        self.mix_dilation=cfg['mix_dilation']
+        
         self.first_linear_out=cfg['first_linear_out']
         self.hidden_size = cfg['hidden_size']
         
-        self.encoder = self._encoder(channels=self.channel, kernel_size=self.kernel, stride=self.stride)
-        self.ex1_encoder = self._encoder(channels=self.ex1_channel, kernel_size=self.ex1_kernel, stride=self.ex1_stride)
-        self.ex2_encoder = self._encoder(channels=self.ex1_channel, kernel_size=self.ex2_kernel, stride=self.ex2_stride)
-        self.mix_encoder = self._encoder(channels=self.mix_channel, kernel_size=self.mix_stride, stride=self.mix_stride)
+        self.encoder = self._encoder(channels=self.channel, kernel_size=self.kernel, stride=self.stride, dilation=self.dilation)
+        self.ex1_encoder = self._encoder(channels=self.ex1_channel, kernel_size=self.ex1_kernel, stride=self.ex1_stride, dilation=self.ex1_dilation)
+        self.ex2_encoder = self._encoder(channels=self.ex1_channel, kernel_size=self.ex2_kernel, stride=self.ex2_stride, dilation=self.ex2_dilation)
+        self.mix_encoder = self._encoder(channels=self.mix_channel, kernel_size=self.mix_stride, stride=self.mix_stride, dilation=self.mix_dilation)
         self.compressor = self._encoder(channels=(self.mix_channel[1],1), kernel_size=(1,1), stride=(1,1))
         first_linear_in = int(np.ceil(self.f_size/self.stride[0]))
         self.first_linear = nn.Linear(in_features=first_linear_in, out_features=self.first_linear_out)
@@ -41,14 +45,15 @@ class FeatExtractorBlstm_pp(nn.Module):
         self.last_linear = nn.Linear(in_features=self.hidden_size*2, out_features=self.f_size)
     
         
-    def _encoder(self, channels, kernel_size, stride):
-        padding = self._kernel_pad(kernel_size)
+    def _encoder(self, channels, kernel_size, stride, dilation=1):
+        padding = self._kernel_and_dilation_pad(kernel_size, dilation)
         return nn.Sequential(nn.Conv2d(in_channels=channels[0],
                                        out_channels=channels[1],
                                        kernel_size=kernel_size,
                                        stride=stride,
+                                       dilation=dilation,
                                        padding=padding),
-                             nn.BatchNorm2d(channels[1]))
+                             nn.InstanceNorm2d(channels[1]))
         
         
     def _stride_pad(self, x, stride):
@@ -61,8 +66,8 @@ class FeatExtractorBlstm_pp(nn.Module):
         x = torch.cat((x, torch.zeros((batch, channel, pad_f, time+pad_t), dtype=x.dtype, device=x.device)), axis=2)
         return x
     
-    def _kernel_pad(self, kernel_size):
-        return [(i - 1) // 2 for i in kernel_size]
+    def _kernel_and_dilation_pad(self, kernel_size, dilation):
+        return [((i + (i-1)*(dilation - 1) - 1) // 2) for i in kernel_size]
     
 
     def forward(self,xin, ex1_xin, ex2_xin):
