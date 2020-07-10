@@ -7,9 +7,10 @@ class FeatExtractorBlstm_pp(nn.Module):
         super().__init__()
         self.f_size = cfg['f_size']
         
-        self.kernel = cfg['kernel']
-        self.stride = cfg['stride']
-        self.channel = cfg['channel']
+        self.kernel=cfg['kernel']
+        self.stride=cfg['stride']
+        self.channel=cfg['channel']
+        self.dilation=cfg['dilation']
 
         self.ex1_kernel=cfg['ex1_kernel']
         self.ex1_stride=cfg['ex1_stride']
