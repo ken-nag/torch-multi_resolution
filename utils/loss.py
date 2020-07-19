@@ -10,7 +10,6 @@ class MSE():
     
     def __call__(self, est_source, true_source):
         batch_size, _, _, _ = est_source.shape
-        est_source = est_source.squeeze(1)
         mse_val= self._cal_err(est_source, true_source)
         loss = torch.sum(mse_val) / batch_size
         return loss

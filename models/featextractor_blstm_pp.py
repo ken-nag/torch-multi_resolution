@@ -84,7 +84,7 @@ class FeatExtractorBlstm_pp(nn.Module):
         mix_encoder_in = torch.cat((encoder_out, ex1_encoder_out, ex2_encoder_out), axis=1)
         mix_encoder_out = self.mix_encoder(self._stride_pad(mix_encoder_in, self.mix_stride))
         compressor_out = self.compressor(mix_encoder_out)
-        compressor_out = compressor_out.squeeze(1)#(batch, T, F)
+        compressor_out = compressor_out.squeeze(1)#(batch, F, T)
         compressor_out = compressor_out.permute(0,2,1)
         first_linear_out = self.first_linear(compressor_out)
         blstm_out, _ = self.blstm_block(first_linear_out)
