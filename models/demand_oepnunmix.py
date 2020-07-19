@@ -38,7 +38,7 @@ class OpenUnmix(nn.Module):
             hidden_size=lstm_hidden_size,
             num_layers=3,
             bidirectional=True,
-            batch_first=True,
+            batch_first=False,
             dropout=0.4,
         )
 
