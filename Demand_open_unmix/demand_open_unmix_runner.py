@@ -5,7 +5,7 @@ sys.path.append('../')
 from models.demand_oepnunmix import OpenUnmix
 from data_utils.voice_demand_dataset import VoicebankDemandDataset
 from data_utils.data_loader import FastDataLoader
-from utils.loss import MSE
+from utils.loss import PSA
 from utils.visualizer import show_TF_domein_result
 import numpy as np
 from utils.stft_module import STFTModule
@@ -51,7 +51,7 @@ class DemandOpenUnmixRunner():
                                                 shuffle=True)
         
         self.model = OpenUnmix(cfg['dnn_cfg']).to(self.device)
-        self.criterion = MSE()
+        self.criterion = PSA()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
         self.save_path = cfg['save_path']
         self.early_stopping = EarlyStopping(patience=10)
