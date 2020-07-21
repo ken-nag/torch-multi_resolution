@@ -25,7 +25,6 @@ class FeatExtractorBlstm_p1_Runner():
         
         self.stft_module = STFTModule(cfg['stft_params'], self.device)
         self.stft_module_ex1 = STFTModule(cfg['stft_params_ex1'], self.device)
-        self.stft_module_ex2 = STFTModule(cfg['stft_params_ex2'], self.device)
         
         self.train_data_num = cfg['train_data_num']
         self.valid_data_num = cfg['valid_data_num']
@@ -89,7 +88,7 @@ class FeatExtractorBlstm_p1_Runner():
             est_source = noisy_spec * est_mask[...,None]
             
             if mode == 'train' or mode == 'validation':
-                loss = 10 * self.criterion(est_source, clean_spec)
+                loss = self.criterion(est_source, clean_spec)
                 running_loss += loss.data
                 if mode == 'train':
                     loss.backward()
