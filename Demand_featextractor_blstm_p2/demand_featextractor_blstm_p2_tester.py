@@ -2,29 +2,30 @@ import torch
 import sys
 import time
 sys.path.append('../')
-from models.demand_oepnunmix import OpenUnmix
+from models.featextractor_blstm_p2 import FeatExtractorBlstm_p2
 from data_utils.voice_demand_dataset import VoicebankDemandDataset
 from data_utils.data_loader import FastDataLoader
 from utils.stft_module import STFTModule
 from utils.evaluation import sp_enhance_evals
 import torchaudio.functional as taF
 import numpy as np
-import norbert
 from IPython import get_ipython
 get_ipython().run_line_magic('matplotlib', 'inline')
 
-class DemandOpenUnmixTester():
+class DemandFeatExtractorBLSTM_p2_Tester():
     def __init__(self, cfg):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.dtype= torch.float32
         self.eps = 1e-4
         self.eval_path = cfg['eval_path']
         
-        self.model =  OpenUnmix(cfg['dnn_cfg']).to(self.device)
+        self.model =  FeatExtractorBlstm_p2(cfg['dnn_cfg']).to(self.device)
         self.model.eval()
         self.model.load_state_dict(torch.load(self.eval_path, map_location=self.device))
         
         self.stft_module = STFTModule(cfg['stft_params'], self.device)
+        self.stft_module_ex1 = STFTModule(cfg['stft_params_ex1'], self.device)
+        self.stft_module_ex2 = STFTModule(cfg['stft_params_ex2'], self.device)
         
         self.test_data_num = cfg['test_data_num']
         self.test_batch_size = cfg['test_batch_size']
@@ -44,21 +45,17 @@ class DemandOpenUnmixTester():
     
     def _preprocess(self, noisy):
         with torch.no_grad():
-            noisy_spec = self.stft_module.stft(noisy, pad=None)
+            noisy_spec = self.stft_module.stft(noisy, pad=False)
             noisy_amp_spec = taF.complex_norm(noisy_spec)
             noisy_mag_spec = self.stft_module.to_normalize_mag(noisy_amp_spec)
+          
+            #ex2
+            ex2_noisy_spec = self.stft_module_ex2.stft(noisy, pad=False)
+            ex2_noisy_amp_spec = taF.complex_norm(ex2_noisy_spec)
+            ex2_noisy_mag_spec = self.stft_module_ex2.to_normalize_mag(ex2_noisy_amp_spec)
             
-            return noisy_mag_spec, noisy_spec
-    
-    def _postprocess(self, est_spec, mix_spec):
-        mix_mag_spec = mix_spec.pow(2).sum(-1).pow(1 / 2.0)
-        est_spec = est_spec.cpu().clone().numpy()
-        mix_spec = mix_spec.cpu().clone().numpy()
-        norbert_est = norbert.wiener(est_spec, mix_spec)
-        norbert_est = torch.from_numpy(norbert_est).to(self.dtype).to(self.device)
-        return norbert_est
+            return noisy_mag_spec, ex2_noisy_mag_spec,  noisy_spec
         
-            
     def test(self, mode='test'):
         with torch.no_grad():
             for i, (noisy, clean) in enumerate(self.test_data_loader):
@@ -66,11 +63,10 @@ class DemandOpenUnmixTester():
                 noisy = noisy.to(self.dtype).to(self.device)
                 clean = clean.to(self.dtype).to(self.device)
                 siglen = noisy.shape[1]
-                noisy_mag_spec, noisy_spec = self._preprocess(noisy)
-                est_mask = self.model(noisy_mag_spec)
+                noisy_mag_spec, ex2_noisy_mag_spec, noisy_spec = self._preprocess(noisy)
+                est_mask = self.model(noisy_mag_spec, ex2_noisy_mag_spec)
                 est_source = noisy_spec * est_mask[...,None]
-                norbert_est = self._postprocess(est_source, noisy_spec)
-                est_wave = self.stft_module.istft(norbert_est, siglen)
+                est_wave = self.stft_module.istft(est_source, siglen)
                 print(est_wave.shape)
                 est_wave = est_wave.squeeze(0)
                 clean = clean.squeeze(0)
@@ -85,15 +81,11 @@ class DemandOpenUnmixTester():
                 
             print('pesq mean:', np.mean(self.pesq_list))
             print('stoi mean:', np.mean(self.stoi_list))
-            print('si-sdr mean:', np.mean(self.si_sdr_list))
-            print('sdr improve mean:', np.mean(self.si_sdr_improve_list))
-            
-            print('pesq median:', np.median(self.pesq_list))
-            print('stoi median:', np.median(self.stoi_list))
-            print('si-sder median:', np.median(self.si_sdr_list))
+            print('sdr mean:', np.mean(self.si_sdr_list))
+            print('sdr improve mena:', np.mean(self.si_sdr_improve_list))
         
 
 if __name__ == '__main__':
-    from configs.demand_open_unmix_config_1 import test_cfg
-    obj = DemandOpenUnmixTester(test_cfg)
+    from configs.demand_featextractor_blstm_p2_config_1 import test_cfg
+    obj = DemandFeatExtractorBLSTM_p2_Tester(test_cfg)
     obj.test()
