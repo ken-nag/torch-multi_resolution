@@ -73,7 +73,7 @@ class FeatExtractorBlstm_p1_Runner():
             ex1_noisy_spec = self.stft_module_ex1.stft(noisy, pad=False)
             ex1_noisy_amp_spec = taF.complex_norm(ex1_noisy_spec)
             ex1_noisy_mag_spec = self.stft_module_ex1.to_normalize_mag(ex1_noisy_amp_spec)
-            
+          
             return noisy_mag_spec, ex1_noisy_mag_spec, clean_amp_spec, noisy_amp_spec, noisy_spec, clean_spec
         
     def _run(self, mode=None, data_loader=None):
@@ -83,7 +83,7 @@ class FeatExtractorBlstm_p1_Runner():
             clean = clean.to(self.dtype).to(self.device)
             noisy_mag_spec, ex1_noisy_mag_spec, clean_amp_spec,  noisy_amp_spec, noisy_spec, clean_spec = self._preprocess(noisy, clean)
             
-            self.model.zero_grad()
+            self.model.zero_grad()  
             est_mask = self.model(noisy_mag_spec, ex1_noisy_mag_spec)
             est_source = noisy_spec * est_mask[...,None]
             
