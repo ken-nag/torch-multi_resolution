@@ -60,7 +60,7 @@ class DemandOpenUnmixTester():
                 noisy_mag_spec, noisy_spec = self._preprocess(noisy)
                 est_mask = self.model(noisy_mag_spec)
                 est_source = noisy_spec * est_mask[...,None]
-                norbert_est = norbert.Wiener(est_source, noisy)
+                norbert_est = norbert.wiener(est_source, noisy)
                 est_wave = self.stft_module.istft(norbert_est, siglen)
                 print(est_wave.shape)
                 est_wave = est_wave.squeeze(0)
