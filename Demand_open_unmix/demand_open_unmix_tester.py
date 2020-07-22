@@ -51,10 +51,10 @@ class DemandOpenUnmixTester():
             return noisy_mag_spec, noisy_spec
     
     def _postprocess(self, est_spec, mix_spec):
-        mix_mag_spec = mix_spec.pow(2).sum(-1).pow(1 / 2.0)
+        est_mag_spec = est_spec.pow(2).sum(-1).pow(1 / 2.0)
         est_spec = est_spec.cpu().clone().numpy()
         mix_spec = mix_spec.cpu().clone().numpy()
-        norbert_est = norbert.wiener(est_spec, mix_spec)
+        norbert_est = norbert.wiener(est_mag_spec, mix_spec)
         norbert_est = torch.from_numpy(norbert_est).to(self.dtype).to(self.device)
         return norbert_est
         
