@@ -9,6 +9,7 @@ from utils.stft_module import STFTModule
 from utils.evaluation import sp_enhance_evals
 import torchaudio.functional as taF
 import numpy as np
+import norbert
 from IPython import get_ipython
 get_ipython().run_line_magic('matplotlib', 'inline')
 
@@ -59,7 +60,8 @@ class DemandOpenUnmixTester():
                 noisy_mag_spec, noisy_spec = self._preprocess(noisy)
                 est_mask = self.model(noisy_mag_spec)
                 est_source = noisy_spec * est_mask[...,None]
-                est_wave = self.stft_module.istft(est_source, siglen)
+                norbert_est = norbert.Wiener(est_source, noisy)
+                est_wave = self.stft_module.istft(norbert_est, siglen)
                 print(est_wave.shape)
                 est_wave = est_wave.squeeze(0)
                 clean = clean.squeeze(0)
