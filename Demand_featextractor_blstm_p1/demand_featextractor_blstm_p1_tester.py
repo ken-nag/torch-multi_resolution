@@ -25,8 +25,7 @@ class DemandFeatExtractorBLSTM_p1_Tester():
         
         self.stft_module = STFTModule(cfg['stft_params'], self.device)
         self.stft_module_ex1 = STFTModule(cfg['stft_params_ex1'], self.device)
-        self.stft_module_ex2 = STFTModule(cfg['stft_params_ex2'], self.device)
-        
+     
         self.test_data_num = cfg['test_data_num']
         self.test_batch_size = cfg['test_batch_size']
         self.sample_len = cfg['sample_len']
