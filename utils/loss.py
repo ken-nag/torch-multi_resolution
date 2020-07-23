@@ -14,3 +14,11 @@ class MSE():
         loss = torch.sum(mse_val) / batch_size
         return loss
     
+class T_MAE():
+    def __call__(self, est_spec, true_spec, stft_module):
+        est_wave = stft_module.istft(true_spec)
+        true_wave = stft_module.istft(est_spec)
+        _, sig_len = est_wave.shape
+        return torch.sum(torch.abs(est_wave - true_wave))/sig_len
+        
+    
