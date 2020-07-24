@@ -24,7 +24,20 @@ class DSD100Dataset(torch.utils.data.Dataset):
         pad_x = torch.zeros(x_len + pad_len, dtype=self.dtype, device=self.device)
         pad_x[:x_len] = x[:]
         return pad_x.reshape(batch_size, self.sample_len)
-        
+    
+    def _random_scaling(self):
+        pass
+    
+    def _random_chunking(self):
+        pass
+    
+    def _random_mixing(self):
+        pass
+    
+    def _argumentation(self):
+        pass
+    
+    
     def __getitem__(self, idx):
         if self.shuffle:
             path = random.sample(self.npzs_path, 1)
