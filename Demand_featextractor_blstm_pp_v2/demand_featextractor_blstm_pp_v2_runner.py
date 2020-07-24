@@ -5,7 +5,7 @@ sys.path.append('../')
 from models.featextractor_blstm_pp_v2 import FeatExtractorBlstm_pp_v2
 from data_utils.voice_demand_dataset import VoicebankDemandDataset
 from data_utils.data_loader import FastDataLoader
-from utils.loss import PSA
+from utils.loss import T_MAE
 from utils.visualizer import show_TF_domein_result
 import numpy as np
 from utils.stft_module import STFTModule
@@ -57,7 +57,7 @@ class FeatExtractorBlstm_pp_v2_Runner():
                                                 shuffle=True)
       
         self.model = FeatExtractorBlstm_pp_v2(cfg['dnn_cfg']).to(self.device)
-        self.criterion = PSA()
+        self.criterion = T_MAE()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
         self.early_stopping = EarlyStopping(patience=10)
         
@@ -93,7 +93,7 @@ class FeatExtractorBlstm_pp_v2_Runner():
             est_source = noisy_spec * est_mask[...,None]
             
             if mode == 'train' or mode == 'validation':
-                loss = self.criterion(est_source, clean_spec)
+                loss = self.criterion(est_source, clean_spec, self.stft_module)
                 running_loss += loss.data
                 if mode == 'train':
                     loss.backward()
