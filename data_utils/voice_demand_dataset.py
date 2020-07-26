@@ -4,9 +4,10 @@ import torch
 import torchaudio
 import os
 import random
+import numpy as np
 
 class VoicebankDemandDataset(torch.utils.data.Dataset):
-    def __init__(self, data_num, full_data_num=None, folder_type=None, sample_len=None, shuffle=True, device=None):
+    def __init__(self, data_num, full_data_num=None, folder_type=None, sample_len=None, shuffle=True, device=None, augmentation=None):
         self.dtype = torch.float32
         self.dataset_root = '../data/VoicebankDemand/'
         self.sample_len = sample_len
@@ -14,6 +15,7 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
         self.data_num = data_num
         self.shuffle = shuffle
         self.device = device
+        self.augmentation = augmentation
         
         if self.folder_type == 'train' or self.folder_type == 'validation':
             self.clean_root = self.dataset_root + '/clean_trainset_wav/'
@@ -71,6 +73,26 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
         pad_x = torch.zeros(self.sample_len, dtype=self.dtype)
         pad_x[:x_len] = x[:]
         return pad_x
+    
+    def _random_chunk_or_pad(self, noisy, clean):
+        x_len = len(noisy)
+        if x_len > self.sample_len:
+            start = np.random.randint(x_len - self.sample_len)
+            clean = clean[start:start+self.sample_len]
+            noisy = noisy[start:start+self.sample_len]
+        else:
+            clean = self._zero_pad(clean)
+            noisy = self._zero_pad(noisy)
+        return noisy, clean
+    
+    def _random_snr(self, noisy, clean):
+        noise = noisy - clean
+        p_noise = noise.abs().sum(-1)
+        p_clean = clean.abs().sum(-1)
+        snr = random.randrange(-15,15)
+        k = p_clean/(torch.tensor(10, dtype=torch.float32).to(self.device).pow(snr/20.0)*p_noise)
+        noise = k*noise
+        return clean + noise
         
     def __len__(self):
         return self.data_num
@@ -90,8 +112,13 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
         noisy = noisy.squeeze(0).to(self.dtype)
         
         if self.folder_type == 'train' or self.folder_type == 'validation':
-            clean = self._cut_or_pad(clean)
-            noisy = self._cut_or_pad(noisy)
+            if self.augmentation:
+                noisy, clean = self._random_chunk_or_pad(noisy, clean)
+                noisy = self._random_snr(noisy, clean)
+            else:
+                clean = self._cut_or_pad(clean)
+                noisy = self._cut_or_pad(noisy)
+                
             
         # if self.folder_type == 'test':
             # clean = self._crop_or_pad(clean)

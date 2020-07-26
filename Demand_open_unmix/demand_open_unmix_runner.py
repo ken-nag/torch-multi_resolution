@@ -35,12 +35,14 @@ class DemandOpenUnmixRunner():
         self.train_dataset = VoicebankDemandDataset(data_num=self.train_data_num, 
                                                     full_data_num=self.train_full_data_num,
                                                     sample_len=self.sample_len, 
-                                                    folder_type='train')
+                                                    folder_type='train',
+                                                    augmentation=True)
         
         self.valid_dataset = VoicebankDemandDataset(data_num=self.valid_data_num, 
                                                     full_data_num=self.valid_full_data_num,
                                                     sample_len=self.sample_len, 
-                                                    folder_type='validation')
+                                                    folder_type='validation',
+                                                    augmentation=False)
         
         self.train_data_loader = FastDataLoader(self.train_dataset, 
                                                 batch_size=self.train_batch_size, 

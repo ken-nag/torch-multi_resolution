@@ -4,15 +4,15 @@ import torch
 import random
 
 class DSD100Dataset(torch.utils.data.Dataset):
-    def __init__(self, data_num, sample_len=None, transform=None, folder_type=None, shuffle=True, device=None):
+    def __init__(self, data_num, sample_len=None, transform=None, folder_type=None, shuffle=True, device=None, augmentation=True):
         self.data_num = data_num
         self.dtype= torch.float32
-        self.transform = transform
-        self.npzs_path = glob.glob('../data/DSD100npz/{0}/*'.format(folder_type))
+        self.audio_folder_path = glob.glob('../data/DSD100/{0}/*'.format(folder_type))
         self.sample_len = sample_len
         self.shuffle = shuffle
         self.folder_type = folder_type
-        self.device=device
+        self.device = device
+        self.augmentation = augmentation
         
     def __len__(self):
         return self.data_num
@@ -25,16 +25,18 @@ class DSD100Dataset(torch.utils.data.Dataset):
         pad_x[:x_len] = x[:]
         return pad_x.reshape(batch_size, self.sample_len)
     
-    def _random_scaling(self):
-        pass
-    
-    def _random_chunking(self):
-        pass
+    def _random_scaling(self, source):
+        scale_coeff = random.randrange(0, 10)/10.0 + 0.25#range 0.25~1.25
+        return scale_coeff * source
+        
+    def _random_chunking(self, source):
+         start = np.random.randint(source - self.sample_len)
+         return source[start:(start+self.sample_len)]
     
     def _random_mixing(self):
         pass
     
-    def _argumentation(self):
+    def _augmentation(self):
         pass
     
     
