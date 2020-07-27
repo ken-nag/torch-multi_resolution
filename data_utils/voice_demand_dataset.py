@@ -89,11 +89,18 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
         noise = noisy - clean
         p_noise = noise.abs().sum(-1)
         p_clean = clean.abs().sum(-1)
-        snr = random.uniform(-15,5)
+        snr = random.uniform(-15,15)
         k = p_clean/(torch.tensor(10, dtype=torch.float32).to(self.device).pow(snr/20.0)*p_noise)
         noise = k*noise
         return clean + noise
-        
+    
+    def _swap_noise(self, clean):
+        wav_name = random.sample(self.wav_name, 1)[-1]
+        clean2, _ = torchaudio.load(self.clean_root+wav_name)
+        noisy2, _ = torchaudio.load(self.noisy_root+wav_name)
+        noise = noisy2 - clean2
+        return clean + noise
+    
     def __len__(self):
         return self.data_num
         
@@ -113,6 +120,7 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
         
         if self.folder_type == 'train' or self.folder_type == 'validation':
             if self.augmentation:
+                noisy = self._swap_noise(noisy, clean)
                 noisy, clean = self._random_chunk_or_pad(noisy, clean)
                 noisy = self._random_snr(noisy, clean)
             else:
