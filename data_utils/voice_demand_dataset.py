@@ -120,7 +120,7 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
         
         if self.folder_type == 'train' or self.folder_type == 'validation':
             if self.augmentation:
-                noisy = self._swap_noise(noisy, clean)
+                noisy = self._swap_noise(clean)
                 noisy, clean = self._random_chunk_or_pad(noisy, clean)
                 noisy = self._random_snr(noisy, clean)
             else:
