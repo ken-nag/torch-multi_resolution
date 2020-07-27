@@ -105,10 +105,11 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
         noise_len = len(noise)
         clean_len = len(clean)
         if clean_len >= noise_len:
-            noisy = clean[:noise_len] + noise
+            clean = clean[:noise_len]
+            noisy = clean + noise
         else:
             noisy = clean + noise[:clean_len]
-        return  noisy
+        return  noisy, clean
     
     def __len__(self):
         return self.data_num
@@ -129,7 +130,7 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
         
         if self.folder_type == 'train' or self.folder_type == 'validation':
             if self.augmentation:
-                noisy = self._swap_noise(clean)
+                noisy, clean = self._swap_noise(clean)
                 noisy, clean = self._random_chunk_or_pad(noisy, clean)
                 noisy = self._random_snr(noisy, clean)
             else:
