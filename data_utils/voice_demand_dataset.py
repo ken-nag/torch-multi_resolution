@@ -95,11 +95,20 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
         return clean + noise
     
     def _swap_noise(self, clean):
-        wav_name = random.sample(self.wav_name, 1)[-1]
+        wav_name = random.sample(self.wav_names, 1)[-1]
         clean2, _ = torchaudio.load(self.clean_root+wav_name)
         noisy2, _ = torchaudio.load(self.noisy_root+wav_name)
+        clean2 = clean2.squeeze(0).to(self.dtype)
+        noisy2 = noisy2.squeeze(0).to(self.dtype)
         noise = noisy2 - clean2
-        return clean + noise
+        
+        noise_len = len(noise)
+        clean_len = len(clean)
+        if clean_len >= noise_len:
+            noisy = clean[:noise_len] + noise
+        else:
+            noisy = clean + noise[:clean_len]
+        return  noisy
     
     def __len__(self):
         return self.data_num
@@ -126,13 +135,7 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
             else:
                 clean = self._cut_or_pad(clean)
                 noisy = self._cut_or_pad(noisy)
-                
-            
-        # if self.folder_type == 'test':
-            # clean = self._crop_or_pad(clean)
-            # noisy = self._crop_or_pad(noisy)
-            
-    
+                 
         return noisy, clean    
 
 
