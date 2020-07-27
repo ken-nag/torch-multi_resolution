@@ -26,7 +26,7 @@ class DSD100Dataset(torch.utils.data.Dataset):
         return pad_x.reshape(batch_size, self.sample_len)
     
     def _random_scaling(self, source):
-        scale_coeff = random.randrange(0, 10)/10.0 + 0.25#range 0.25~1.25
+        scale_coeff = random.uniform(0, 1.25) #range 0.25~1.25
         return scale_coeff * source
         
     def _random_chunking(self, source):

@@ -40,7 +40,8 @@ class DatasetMaker():
          for n, track_path in enumerate(subfolders):
              print('track_path:', track_path)
              save_path = save_path = save_folder + 'track{0}/'.format(n)
-             os.mkdir(save_path)
+             if not os.path.exists(save_path):
+                 os.mkdir(save_path)
              for i, source_name in enumerate(self.sources_name):
                     source_path = track_path + '/{0}.wav'.format(source_name)
                     data = self._read_as_mono(source_path)
@@ -52,3 +53,4 @@ class DatasetMaker():
 if __name__ == '__main__':
     obj = DatasetMaker()
     obj.make_dataset(type='Dev')
+    obj.make_dataset(type='Test')
