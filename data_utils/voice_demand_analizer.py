@@ -2,6 +2,10 @@ import torch
 import torchaudio
 import glob
 import os
+import matplotlib.pyplot as plt
+
+from IPython import get_ipython
+get_ipython().run_line_magic('matplotlib', 'inline')
 
 class Analizer():
     def __init__(self, folder_type):
@@ -45,6 +49,9 @@ class Analizer():
         print('max:', snr_list.max())
         print('mix:', snr_list.min())
         print('median:', snr_list.median())
+        
+        snr_list = snr_list.detach().clone().cpu().numpy()
+        plt.hist(snr_list, bins=100)
         
         
         
