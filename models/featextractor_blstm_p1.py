@@ -23,7 +23,7 @@ class FeatExtractorBlstm_p1(nn.Module):
         
         self.encoder = self._encoder(channels=self.channel, kernel_size=self.kernel, stride=self.stride)
         self.ex1_encoder = self._encoder(channels=self.ex1_channel, kernel_size=self.ex1_kernel, stride=self.ex1_stride)
-        self.mix_encoder = self._encoder(channels=self.mix_channel, kernel_size=self.mix_stride, stride=self.mix_stride)
+        self.mix_encoder = self._encoder(channels=self.mix_channel, kernel_size=self.mix_kernel, stride=self.mix_stride)
         self.compressor = self._encoder(channels=(self.mix_channel[1],1), kernel_size=(1,1), stride=(1,1))
         first_linear_in = int(np.ceil(self.f_size/self.stride[0]))
         self.first_linear = nn.Linear(in_features=first_linear_in, out_features=self.first_linear_out)
