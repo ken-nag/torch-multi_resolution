@@ -24,7 +24,7 @@ class FeatExtractorBlstm(nn.Module):
         self.encoder = self._encoder(channels=self.channel, kernel_size=self.kernel, stride=self.stride, dilation=self.dilation)
         self.mix_encoder = self._encoder(channels=self.mix_channel, kernel_size=self.mix_stride, stride=self.mix_stride, dilation=self.mix_dilation)
         self.compressor = self._encoder(channels=(self.mix_channel[1],1), kernel_size=(1,1), stride=(1,1))
-        first_linear_in = int(np.ceil(self.f_size/self.mix_stride[0]))
+        first_linear_in = int(np.ceil(np.ceil(self.f_size/self.stride[0])/self.mix_stride[0]))
         self.first_linear = nn.Linear(in_features=first_linear_in, out_features=self.first_linear_out)
         self.blstm_block = nn.LSTM(input_size=self.first_linear_out,
                                    hidden_size=self.hidden_size,

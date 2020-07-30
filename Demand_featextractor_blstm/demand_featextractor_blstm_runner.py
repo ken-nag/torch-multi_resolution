@@ -36,12 +36,16 @@ class DemandFeatExtractorBLSTMRunner():
                                                     full_data_num=self.train_full_data_num,
                                                     sample_len=self.sample_len, 
                                                     folder_type='train',
+                                                    shuffle=True,
+                                                    device=self.device,
                                                     augmentation=True)
         
         self.valid_dataset = VoicebankDemandDataset(data_num=self.valid_data_num, 
                                                     full_data_num=self.valid_full_data_num,
                                                     sample_len=self.sample_len, 
                                                     folder_type='validation',
+                                                    shuffle=True,
+                                                    device=self.device,
                                                     augmentation=False)
         
         self.train_data_loader = FastDataLoader(self.train_dataset, 
