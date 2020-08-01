@@ -16,18 +16,24 @@ class MSE():
     
 class T_MAE():
     def __call__(self, est_spec, true_spec, stft_module):
-        est_wave = stft_module.istft(true_spec)
-        true_wave = stft_module.istft(est_spec)
-        batch_size, sig_len = est_wave.shape
-        loss = torch.sum(torch.abs(est_wave - true_wave))/sig_len
-        return loss / batch_size
+        est_wave = stft_module.istft(est_spec)
+        true_wave = stft_module.istft(true_spec)
+        noise = est_wave - true_wave
+        loss = noise.abs().mean(-1)
+        return loss.mean()
         
 class Clip_SDR():
-    def _cal_sder(self, est_wave, true_wave):
+    def _cal_sdr(self, est_wave, true_wave):
         noise = est_wave - true_wave
-        p_noise = est_wave.abs().sum()
-    def __call_(self, est_spec, true_spec, stft_module):
-        est_wave = stft_module.istft(true_spec)
-        true_wave = stft_module.istft(est_spec)
-        sdr =　self._cal_sdr(est_wave, true_eave)
+        p_noise = noise.pow(2).sum(-1)
+        p_true = true_wave.pow(2).sum(-1)
+        sdr = 10*torch.log10(p_true/p_noise)
+        return sdr
     
+    def __call__(self, est_spec, true_spec, stft_module):
+        est_wave = stft_module.istft(est_spec)
+        true_wave = stft_module.istft(true_spec)
+        sdr = self._cal_sdr(est_wave, true_wave)
+        a = 20
+        clip_sdr = torch.sum(a * torch.tanh(sdr/a))
+        return -clip_sdr

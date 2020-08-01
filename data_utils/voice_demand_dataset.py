@@ -87,9 +87,9 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
     
     def _random_snr(self, noisy, clean):
         noise = noisy - clean
-        p_noise = noise.abs().sum(-1)
-        p_clean = clean.abs().sum(-1)
-        snr = random.uniform(-10,15)
+        p_noise = noise.pow(2).mean().sqrt()
+        p_clean = clean.pow(2).mean().sqrt()
+        snr = random.uniform(-5,15)
         k = p_clean/(torch.tensor(10, dtype=torch.float32).to(self.device).pow(snr/20.0)*p_noise)
         noise = k*noise
         return clean + noise
