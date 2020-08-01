@@ -30,13 +30,34 @@ class FeatExtractorBlstm_pp(nn.Module):
         self.first_linear_out=cfg['first_linear_out']
         self.hidden_size = cfg['hidden_size']
         
-        self.encoder = self._encoder(channels=self.channel, kernel_size=self.kernel, stride=self.stride, dilation=self.dilation)
-        self.ex1_encoder = self._encoder(channels=self.ex1_channel, kernel_size=self.ex1_kernel, stride=self.ex1_stride, dilation=self.ex1_dilation)
-        self.ex2_encoder = self._encoder(channels=self.ex2_channel, kernel_size=self.ex2_kernel, stride=self.ex2_stride, dilation=self.ex2_dilation)
-        self.mix_encoder = self._encoder(channels=self.mix_channel, kernel_size=self.mix_kernel, stride=self.mix_stride, dilation=self.mix_dilation)
-        self.compressor = self._encoder(channels=(self.mix_channel[1],1), kernel_size=(1,1), stride=(1,1))
+        self.encoder = self._encoder(channels=self.channel, 
+                                     kernel_size=self.kernel, 
+                                     stride=self.stride, 
+                                     dilation=self.dilation)
+        
+        self.ex1_encoder = self._encoder(channels=self.ex1_channel, 
+                                         kernel_size=self.ex1_kernel, 
+                                         stride=self.ex1_stride, 
+                                         dilation=self.ex1_dilation)
+        
+        self.ex2_encoder = self._encoder(channels=self.ex2_channel,
+                                         kernel_size=self.ex2_kernel, 
+                                         stride=self.ex2_stride, 
+                                         dilation=self.ex2_dilation)
+        
+        self.mix_encoder = self._encoder(channels=self.mix_channel,
+                                         kernel_size=self.mix_kernel, 
+                                         stride=self.mix_stride, 
+                                         dilation=self.mix_dilation)
+        
+        self.compressor = self._encoder(channels=(self.mix_channel[1],1),
+                                        kernel_size=(1,1),
+                                        stride=(1,1))
+        
         first_linear_in = int(np.ceil(self.f_size/self.stride[0]))
-        self.first_linear = nn.Linear(in_features=first_linear_in, out_features=self.first_linear_out)
+        self.first_linear = nn.Linear(in_features=first_linear_in, 
+                                      out_features=self.first_linear_out)
+        
         self.blstm_block = nn.LSTM(input_size=self.first_linear_out,
                                    hidden_size=self.hidden_size,
                                    num_layers=2,
