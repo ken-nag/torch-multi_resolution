@@ -5,7 +5,7 @@ sys.path.append('../')
 from models.blstm import BLSTM2
 from data_utils.voice_demand_dataset import VoicebankDemandDataset
 from data_utils.data_loader import FastDataLoader
-from utils.loss import T_MAE
+from utils.loss import Clip_SDR
 from utils.visualizer import show_TF_domein_result
 import numpy as np
 from utils.stft_module import STFTModule
@@ -53,7 +53,7 @@ class DemandBLSTM2Runner():
                                                 shuffle=True)
         
         self.model = BLSTM2(cfg['dnn_cfg']).to(self.device)
-        self.criterion = T_MAE()
+        self.criterion = Clip_SDR()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
         self.save_path = cfg['save_path']
         self.early_stopping = EarlyStopping(patience=10)
