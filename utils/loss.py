@@ -23,8 +23,11 @@ class T_MAE():
         return loss / batch_size
         
 class Clip_SDR():
-    def __cals_(self, est_spec, true_spec, stft_module):
+    def _cal_sder(self, est_wave, true_wave):
+        noise = est_wave - true_wave
+        p_noise = est_wave.abs().sum()
+    def __call_(self, est_spec, true_spec, stft_module):
         est_wave = stft_module.istft(true_spec)
         true_wave = stft_module.istft(est_spec)
-
+        sdr =　self._cal_sdr(est_wave, true_eave)
     

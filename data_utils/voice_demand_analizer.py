@@ -26,8 +26,8 @@ class Analizer():
 
     def _cal_snr(self, noisy, clean):
         noise = noisy - clean
-        p_clean = clean.abs().sum()
-        p_noise = noise.abs().sum()
+        p_clean = clean.pow(2).mean().sqrt()
+        p_noise = noise.pow(2).mean().sqrt()
         snr = 20*torch.log10(p_clean/p_noise)
         return snr
     
