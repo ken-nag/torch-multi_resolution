@@ -35,16 +35,16 @@ class FeatExtractorBlstm(nn.Module):
                                         kernel_size=(1,1), 
                                         stride=(1,1))
         
-        first_linear_in = int(np.ceil(np.ceil(self.f_size/self.stride[0])/self.mix_stride[0]))
+        self.first_linear_in = int(np.ceil(np.ceil(self.f_size/self.stride[0])/self.mix_stride[0]))
         
-        self.first_linear = nn.Linear(in_features=first_linear_in, 
+        self.first_linear = nn.Linear(in_features=self.first_linear_in, 
                                       out_features=self.first_linear_out)
         
         self.blstm_block = nn.LSTM(input_size=self.first_linear_out,
                                    hidden_size=self.hidden_size,
                                    num_layers=2,
                                    bidirectional=True, 
-                                   batch_first=True)
+                                   batch_first=False)
         
         self.last_linear = nn.Linear(in_features=self.hidden_size*2, out_features=self.f_size)
     
@@ -72,20 +72,23 @@ class FeatExtractorBlstm(nn.Module):
     def _kernel_and_dilation_pad(self, kernel_size, dilation):
         return [((i + (i-1)*(dilation - 1) - 1) // 2) for i in kernel_size]
     
-    def forward(self,xin):
-        batch, freq, time = xin.shape
-       
+    def forward(self,xin):       
         xin = xin.unsqueeze(1)
      
         encoder_out = self.encoder(self._stride_pad(xin, self.stride))
         mix_encoder_out = self.mix_encoder(self._stride_pad(encoder_out, self.mix_stride))
         compressor_out = self.compressor(mix_encoder_out)
-        compressor_out = compressor_out.squeeze(1)#(batch, T, F)
-        compressor_out = compressor_out.permute(0,2,1)
+        compressor_out = compressor_out.squeeze(1)#(batch, freq, time)
+        compressor_out = compressor_out.permute(2,0,1)#(time, batch, freq)
+        time, batch, freq = compressor_out.shape
+        compressor_out = compressor_out.reshape(-1, self.first_linear_in)#(time*batch, freq)
         first_linear_out = self.first_linear(compressor_out)
+        first_linear_out =  first_linear_out.reshape(time, batch, self.first_linear_out)#(time, batch, freq)
         blstm_out, _ = self.blstm_block(first_linear_out)
+        blstm_out = blstm_out.reshape(-1, self.hidden_size*2)
         last = self.last_linear(blstm_out)
-        mask = last.permute(0,2,1)
+        last = last.reshape(time, batch, self.f_size)
+        mask = last.permute(1,2,0)
         mask = torch.sigmoid(mask)
         return mask
 
