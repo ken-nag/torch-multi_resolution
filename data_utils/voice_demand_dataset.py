@@ -116,7 +116,7 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
         
     def __getitem__(self, idx):
         if self.shuffle:
-            wav_name = self.wav_names[idx]
+            wav_name = random.sample(self.wav_names, 1)[-1]
         else:
             print(idx)
             wav_name = self.wav_names[idx]
