@@ -37,3 +37,38 @@ class Clip_SDR():
         a = 20
         clip_sdr = torch.sum(a * torch.tanh(sdr/a))
         return -clip_sdr
+
+class MultiSTFT_Loss():
+    def _time_l1_loss(self, est_wave, true_wave):
+        noise = est_wave - true_wave
+        return noise.abs().sum(-1)
+    
+    def _frobenius_norm(self, spec):
+        return spec.pow(2).sum([1,2])
+    
+    def _sc_loss(self, est_spec, true_spec, stft_module):
+        noise = est_spec - true_spec
+        return self._frobenius_norm(noise)/self._frobenius_norm(true_spec)
+    
+    def _mag_loss(self, est_spec, true_spec, stft_moduel):
+        pass
+    
+    def _stft_loss(self, est_wave, true_wave, stft_module):
+        est_spec = self.stft_module.stft(est_wave, pad=False)   
+        true_spec = self.stft_module.stft(true_wave, pad=False)
+        sc_loss = self._sc_loss(est_spec, true_spec, stft_module)
+        mag_loss = self._mag_loss(est_spec, true_spec, stft_module)
+        return sc_loss + mag_loss
+        
+    
+    def __call__(self, est_spec, true_spec, stft_module, stft_module_ex1, stft_module_ex2):
+        est_wave = stft_module.istft(est_spec)
+        true_wave = stft_module.istft(true_spec)
+        batch, sample_len = est_wave.shape
+        time_l1_loss = self._time_l1_loss(est_wave, true_wave)
+        stft_loss = self._stft_loss(est_wave, true_wave, stft_module)
+        ex1_stft_loss = self._stft_loss(est_wave, true_wave, stft_module_ex1)
+        ex2_stft_loss = self._stft_loss(est_wave, true_wave, stft_module_ex2)
+        return (time_l1_loss + stft_loss + ex1_stft_loss + ex2_stft_loss)/sample_len
+        
+        

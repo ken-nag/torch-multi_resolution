@@ -59,7 +59,8 @@ class FeatExtractorBlstm(nn.Module):
                                        kernel_size=kernel_size,
                                        stride=stride,
                                        dilation=dilation,
-                                       padding=padding))
+                                       padding=padding),
+                             nn.InstanceNorm2d(channels[1]))
     
     def _stride_pad(self, x, stride):
         batch, channel, freq, time = x.shape

@@ -34,7 +34,9 @@ class DemandFeatExtractorBLSTMTester():
                                                    folder_type='test', 
                                                    shuffle=False)
         
-        self.test_data_loader =  FastDataLoader(self.test_dataset, batch_size=self.test_batch_size, shuffle=False)
+        self.test_data_loader =  FastDataLoader(self.test_dataset, 
+                                                batch_size=self.test_batch_size, 
+                                                shuffle=False)
         
         self.stoi_list = np.array([])
         self.pesq_list = np.array([])
