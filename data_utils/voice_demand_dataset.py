@@ -116,7 +116,7 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
         
     def __getitem__(self, idx):
         if self.shuffle:
-            wav_name = random.sample(self.wav_names, 1)[-1]
+            wav_name = self.wav_names[idx]
         else:
             print(idx)
             wav_name = self.wav_names[idx]
@@ -131,6 +131,7 @@ class VoicebankDemandDataset(torch.utils.data.Dataset):
         if self.folder_type == 'train' or self.folder_type == 'validation':
             if self.augmentation:
                 noisy, clean = self._swap_noise(clean)
+                noisy, clean = self._random_chunk_or_pad(noisy, clean)
                 noisy = self._random_snr(noisy, clean)
             else:
                 clean = self._cut_or_pad(clean)
