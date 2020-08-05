@@ -2,30 +2,49 @@ from torch.nn import LSTM, Linear, BatchNorm1d
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 class CNNOpenUnmix(nn.Module):
     def __init__(self,cfg):
-        """
-        Input: (nb_samples, nb_channels, nb_timesteps)
-            or (nb_frames, nb_samples, nb_channels, nb_bins)
-        Output: Power/Mag Spectrogram
-                (nb_frames, nb_samples, nb_channels, nb_bins)
-        n_fft=4096,
-        n_hop=1024,
-        hidden_size=512,
-        sample_rate=44100,
-        nb_layers=3,
-        power=1,
-        """
         super(CNNOpenUnmix, self).__init__()
-
+        self.f_size = cfg['f_size']
+        
+        self.kernel = cfg['kernel']
+        self.stride = cfg['stride']
+        self.channel = cfg['channel']
+        self.dilation = cfg['dilation']
+        
+        self.mix_kernel=cfg['mix_kernel']
+        self.mix_stride=cfg['mix_stride']
+        self.mix_channel=cfg['mix_channel']
+        self.mix_dilation=cfg['mix_dilation']
+        
+        self.hidden_size = cfg['hidden_size']
+        self.first_linear_out = cfg['first_linear_out']
+        self.leakiness = 0.2
+        
+        self.bathc_norm = nn.BatchNorm2d(1)
+        self.encoder = self._encoder(channels=self.channel, 
+                                     kernel_size=self.kernel, 
+                                     stride=self.stride, 
+                                     dilation=self.dilation)
+        
+        self.mix_encoder = self._encoder(channels=self.mix_channel, 
+                                         kernel_size=self.mix_kernel, 
+                                         stride=self.mix_stride, 
+                                         dilation=self.mix_dilation)
+        
+        self.compressor = self._encoder(channels=(self.mix_channel[1],1), 
+                                        kernel_size=(1,1), 
+                                        stride=(1,1))
+        
+        self.first_linear_in = int(np.ceil(np.ceil(self.f_size/self.stride[0])/self.mix_stride[0]))
+          
         self.nb_output_bins = cfg['f_size']
         self.nb_bins = self.nb_output_bins
 
-        self.hidden_size = cfg['hidden_size']
-
         self.fc1 = Linear(
-            self.nb_bins, self.hidden_size,
+            self.first_linear_in, self.hidden_size,
             bias=False
         )
 

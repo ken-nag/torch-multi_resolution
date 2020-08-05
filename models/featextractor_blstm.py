@@ -21,6 +21,7 @@ class FeatExtractorBlstm(nn.Module):
         self.first_linear_out = cfg['first_linear_out']
         self.leakiness = 0.2
         
+        self.bathc_norm = nn.BatchNorm2d(1)
         self.encoder = self._encoder(channels=self.channel, 
                                      kernel_size=self.kernel, 
                                      stride=self.stride, 
@@ -38,8 +39,7 @@ class FeatExtractorBlstm(nn.Module):
         first_linear_in = int(np.ceil(np.ceil(self.f_size/self.stride[0])/self.mix_stride[0]))
         
         self.first_linear = nn.Linear(in_features=first_linear_in, 
-                                      out_features=self.first_linear_out,
-                                      bias=False)
+                                      out_features=self.first_linear_out)
         
         self.blstm_block = nn.LSTM(input_size=self.first_linear_out,
                                    hidden_size=self.hidden_size,
@@ -48,8 +48,7 @@ class FeatExtractorBlstm(nn.Module):
                                    batch_first=True)
         
         self.last_linear = nn.Linear(in_features=self.hidden_size*2, 
-                                     out_features=self.f_size,
-                                     bias=False)
+                                     out_features=self.f_size)
     
         
     def _encoder(self, channels, kernel_size, stride, dilation=1):
@@ -60,7 +59,8 @@ class FeatExtractorBlstm(nn.Module):
                                        stride=stride,
                                        dilation=dilation,
                                        padding=padding),
-                             nn.InstanceNorm2d(channels[1]))
+                             nn.InstanceNorm2d(channels[1]),
+                             nn.LeakyReLU(self.leakiness))
     
     def _stride_pad(self, x, stride):
         batch, channel, freq, time = x.shape
@@ -85,7 +85,7 @@ class FeatExtractorBlstm(nn.Module):
         compressor_out = self.compressor(mix_encoder_out)
         compressor_out = compressor_out.squeeze(1)#(batch, T, F)
         compressor_out = compressor_out.permute(0,2,1)
-        first_linear_out = self.first_linear(compressor_out)
+        first_linear_out = torch.nn.functional.leaky_relu(self.first_linear(compressor_out), self.leakiness)
         blstm_out, _ = self.blstm_block(first_linear_out)
         last = self.last_linear(blstm_out)
         mask = last.permute(0,2,1)
