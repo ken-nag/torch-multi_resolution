@@ -1,4 +1,3 @@
-from torch.nn import LSTM, Linear, BatchNorm1d
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -40,19 +39,12 @@ class CNNOpenUnmix(nn.Module):
         
         self.first_linear_in = int(np.ceil(np.ceil(self.f_size/self.stride[0])/self.mix_stride[0]))
           
-        self.nb_output_bins = cfg['f_size']
-        self.nb_bins = self.nb_output_bins
-
-        self.fc1 = Linear(
-            self.first_linear_in, self.hidden_size,
-            bias=False
-        )
-
-        self.bn1 = BatchNorm1d(self.hidden_size)
+        self.fc1 = self._linear_block(in_features=self.first_linear_in,
+                                      out_features=self.hidden_size)
 
         lstm_hidden_size = self.hidden_size // 2
 
-        self.lstm = LSTM(
+        self.lstm = nn.LSTM(
             input_size=self.hidden_size,
             hidden_size=lstm_hidden_size,
             num_layers=3,
@@ -60,45 +52,65 @@ class CNNOpenUnmix(nn.Module):
             batch_first=False,
             dropout=0.4,
         )
+        
+        self.fc2 = self._linear_block(in_features=self.hidden_size*2,
+                                      out_features=self.hidden_size)
+        
+        self.fc3 = self._linear_block(in_features=self.hidden_size,
+                                      out_features=self.f_size)
 
-        self.fc2 = Linear(
-            in_features=self.hidden_size*2,
-            out_features=self.hidden_size,
-            bias=False
-        )
+    
+    def _linear_block(self, in_features, out_features):
+        return nn.Sequential(nn.Linear(in_features=in_features,
+                                       out_features=out_features,
+                                       bias=False),
+                             nn.BatchNorm1d(out_features))
+    
+    def _encoder(self, channels, kernel_size, stride, dilation=1):
+        padding = self._kernel_and_dilation_pad(kernel_size, dilation)
+        return nn.Sequential(nn.Conv2d(in_channels=channels[0],
+                                       out_channels=channels[1],
+                                       kernel_size=kernel_size,
+                                       stride=stride,
+                                       dilation=dilation,
+                                       padding=padding),
+                             nn.InstanceNorm2d(channels[1]),
+                             nn.LeakyReLU(self.leakiness))
+    
+    def _stride_pad(self, x, stride):
+        batch, channel, freq, time = x.shape
+        stride_f = self.stride[0]
+        stride_t = self.stride[1]
+        pad_f = int(np.ceil((freq-1)/stride_f)*stride_f) + 1 - freq
+        pad_t = int(np.ceil((time-1)/stride_t)*stride_t) + 1 - time
+        x = torch.cat((x, torch.zeros((batch, channel, freq, pad_t), dtype=x.dtype, device=x.device)),axis=3)
+        x = torch.cat((x, torch.zeros((batch, channel, pad_f, time+pad_t), dtype=x.dtype, device=x.device)), axis=2)
+        return x
+    
+    def _kernel_and_dilation_pad(self, kernel_size, dilation):
+        return [((i + (i-1)*(dilation - 1) - 1) // 2) for i in kernel_size]
 
-        self.bn2 = BatchNorm1d(self.hidden_size)
-
-        self.fc3 = Linear(
-            in_features=self.hidden_size,
-            out_features=self.nb_output_bins,
-            bias=False
-        )
-
-        self.bn3 = BatchNorm1d(self.nb_output_bins)
-
-    def forward(self, x):
-        x = x.permute(2,0,1)
-        nb_frames, nb_samples, nb_bins = x.data.shape
-
-        x = self.fc1(x.reshape(-1, self.nb_bins))
-        x = self.bn1(x)
+    def forward(self, xin):
+        
+        batch, freq, time = xin.shape
+        xin = xin.unsqueeze(1)
+        encoder_out = self.encoder(self._stride_pad(xin, self.stride))
+        mix_encoder_out = self.mix_encoder(self._stride_pad(encoder_out, self.mix_stride))
+        compressor_out = self.compressor(mix_encoder_out)
+        compressor_out = compressor_out.squeeze(1)#(batch, T, F)
+        compressor_out = compressor_out.permute(2,0,1)
+        nb_frames, nb_samples, nb_bins = compressor_out.shape
+        
+        x = self.fc1(compressor_out.reshape(-1, self.f_size))
         x = x.reshape(nb_frames, nb_samples, self.hidden_size)
         x = torch.tanh(x)
 
         lstm_out = self.lstm(x)
-
         x = torch.cat([x, lstm_out[0]], -1)
-
         x = self.fc2(x.reshape(-1, x.shape[-1]))
-        x = self.bn2(x)
-
         x = F.relu(x)
-
         x = self.fc3(x)
-        x = self.bn3(x)
-
-        x = x.reshape(nb_frames, nb_samples, self.nb_output_bins)
+        x = x.reshape(nb_frames, nb_samples, self.f_size)
         x = x.permute(1,2,0)
 
         mask = F.relu(x)
