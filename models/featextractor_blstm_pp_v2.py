@@ -19,6 +19,7 @@ class FeatExtractorBlstm_pp_v2(nn.Module):
         
         self.first_linear_out=cfg['first_linear_out']
         self.hidden_size = cfg['hidden_size']
+        self.leakiness=0.2
         
         self.encoder = self._encoder(channels=self.channel, 
                                      kernel_size=self.kernel, 
