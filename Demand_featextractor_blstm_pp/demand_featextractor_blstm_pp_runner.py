@@ -5,7 +5,7 @@ sys.path.append('../')
 from models.featextractor_blstm_pp import FeatExtractorBlstm_pp
 from data_utils.voice_demand_dataset import VoicebankDemandDataset
 from data_utils.data_loader import FastDataLoader
-from utils.loss import T_MAE
+from utils.loss import Clip_SDR
 from utils.visualizer import show_TF_domein_result
 import numpy as np
 from utils.stft_module import STFTModule
@@ -63,7 +63,7 @@ class FeatExtractorBlstm_pp_Runner():
                                                 shuffle=True)
       
         self.model = FeatExtractorBlstm_pp(cfg['dnn_cfg']).to(self.device)
-        self.criterion = T_MAE()
+        self.criterion = Clip_SDR()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
         self.early_stopping = EarlyStopping(patience=10)
         
