@@ -110,7 +110,7 @@ class FeatExtractorBlstm_pp(nn.Module):
         compressor_out = self.compressor(mix_encoder_out)
         compressor_out = compressor_out.squeeze(1)#(batch, F, T)
         compressor_out = compressor_out.permute(0,2,1)
-        first_linear_out = self.first_linear(compressor_out), self.leakiness
+        first_linear_out = self.first_linear(compressor_out)
         blstm_out, _ = self.blstm_block(first_linear_out)
         last = self.last_linear(blstm_out)
         mask = last.permute(0,2,1)
