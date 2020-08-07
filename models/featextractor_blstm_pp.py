@@ -29,6 +29,7 @@ class FeatExtractorBlstm_pp(nn.Module):
         
         self.first_linear_out=cfg['first_linear_out']
         self.hidden_size = cfg['hidden_size']
+        self.leakiness = 0.2
         
         self.encoder = self._encoder(channels=self.channel, 
                                      kernel_size=self.kernel, 
@@ -75,7 +76,8 @@ class FeatExtractorBlstm_pp(nn.Module):
                                        stride=stride,
                                        dilation=dilation,
                                        padding=padding),
-                             nn.InstanceNorm2d(channels[1]))
+                             nn.InstanceNorm2d(channels[1]),
+                             nn.LeakyReLU(self.leakiness))
         
         
     def _stride_pad(self, x, stride):
@@ -107,7 +109,7 @@ class FeatExtractorBlstm_pp(nn.Module):
         compressor_out = self.compressor(mix_encoder_out)
         compressor_out = compressor_out.squeeze(1)#(batch, F, T)
         compressor_out = compressor_out.permute(0,2,1)
-        first_linear_out = self.first_linear(compressor_out)
+        first_linear_out = torch.nn.functional.leaky_relu(self.first_linear(compressor_out), self.leakiness)
         blstm_out, _ = self.blstm_block(first_linear_out)
         last = self.last_linear(blstm_out)
         mask = last.permute(0,2,1)

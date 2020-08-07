@@ -50,7 +50,7 @@ class FeatExtractorBlstm_pp_Runner():
                                                     full_data_num=self.valid_full_data_num,
                                                     sample_len=self.sample_len, 
                                                     folder_type='validation',
-                                                    shffule=True,
+                                                    shuffle=True,
                                                     device=self.device,
                                                     augmentation=False)
         
