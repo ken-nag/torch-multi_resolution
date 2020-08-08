@@ -22,11 +22,11 @@ class CNNOpenUnmix(nn.Module):
         self.first_linear_out = cfg['first_linear_out']
         self.leakiness = 0.2
         
-        self.bathc_norm = nn.BatchNorm2d(1)
-        self.encoder = self._encoder(channels=self.channel, 
-                                     kernel_size=self.kernel, 
-                                     stride=self.stride, 
-                                     dilation=self.dilation)
+        self.encoder = nn.Sequential(nn.BatchNorm2d(1),
+                                     self._encoder(channels=self.channel, 
+                                                   kernel_size=self.kernel, 
+                                                   stride=self.stride, 
+                                                   dilation=self.dilation))
         
         self.mix_encoder = self._encoder(channels=self.mix_channel, 
                                          kernel_size=self.mix_kernel, 
@@ -91,8 +91,6 @@ class CNNOpenUnmix(nn.Module):
         return [((i + (i-1)*(dilation - 1) - 1) // 2) for i in kernel_size]
 
     def forward(self, xin):
-        
-        batch, freq, time = xin.shape
         xin = xin.unsqueeze(1)
         encoder_out = self.encoder(self._stride_pad(xin, self.stride))
         mix_encoder_out = self.mix_encoder(self._stride_pad(encoder_out, self.mix_stride))

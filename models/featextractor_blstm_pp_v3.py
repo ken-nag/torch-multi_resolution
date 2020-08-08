@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-class FeatExtractorBlstm_pp_v2(nn.Module):
+class FeatExtractorBlstm_pp_v3(nn.Module):
     def __init__(self, cfg):
         super().__init__()
         self.f_size = cfg['f_size']
@@ -12,6 +12,16 @@ class FeatExtractorBlstm_pp_v2(nn.Module):
         self.channel=cfg['channel']
         self.dilation=cfg['dilation']
 
+        self.ex1_kernel=cfg['ex1_kernel']
+        self.ex1_stride=cfg['ex1_stride']
+        self.ex1_channel=cfg['ex1_channel']
+        self.ex1_dilation=cfg['ex1_dilation']
+        
+        self.ex2_kernel=cfg['ex2_kernel']
+        self.ex2_stride=cfg['ex2_stride']
+        self.ex2_channel=cfg['ex2_channel']
+        self.ex2_dilation=cfg['ex2_dilation']
+        
         self.mix_kernel=cfg['mix_kernel']
         self.mix_stride=cfg['mix_stride']
         self.mix_channel=cfg['mix_channel']
@@ -19,17 +29,26 @@ class FeatExtractorBlstm_pp_v2(nn.Module):
         
         self.first_linear_out=cfg['first_linear_out']
         self.hidden_size = cfg['hidden_size']
-        self.leakiness=0.2
+        self.leakiness = 0.2
         
-        self.encoder = nn.Sequential(nn.BatchNorm2d(1),
-                                     self._encoder(channels=self.channel, 
-                                                   kernel_size=self.kernel, 
-                                                   stride=self.stride, 
-                                                   dilation=self.dilation))
+        self.encoder = self._encoder(channels=self.channel, 
+                                     kernel_size=self.kernel, 
+                                     stride=self.stride, 
+                                     dilation=self.dilation)
         
-        self.mix_encoder = self._encoder(channels=self.mix_channel, 
+        self.ex1_encoder = self._encoder(channels=self.ex1_channel, 
+                                         kernel_size=self.ex1_kernel, 
+                                         stride=self.ex1_stride, 
+                                         dilation=self.ex1_dilation)
+        
+        self.ex2_encoder = self._encoder(channels=self.ex2_channel,
+                                         kernel_size=self.ex2_kernel, 
+                                         stride=self.ex2_stride, 
+                                         dilation=self.ex2_dilation)
+        
+        self.mix_encoder = self._encoder(channels=self.mix_channel,
                                          kernel_size=self.mix_kernel, 
-                                         stride=self.mix_stride,
+                                         stride=self.mix_stride, 
                                          dilation=self.mix_dilation)
         
         self.compressor = self._encoder(channels=(self.mix_channel[1],1),
@@ -38,17 +57,16 @@ class FeatExtractorBlstm_pp_v2(nn.Module):
         
         first_linear_in = int(np.ceil(self.f_size/self.stride[0]))
         self.first_linear = nn.Sequential(nn.Linear(in_features=first_linear_in, 
-                                                   out_features=self.first_linear_out),
-                                         nn.LeakyReLU(self.leakiness))
-       
+                                                    out_features=self.first_linear_out),
+                                          nn.LeakyReLU(self.leakiness))
+        
         self.blstm_block = nn.LSTM(input_size=self.first_linear_out,
                                    hidden_size=self.hidden_size,
                                    num_layers=2,
                                    bidirectional=True, 
                                    batch_first=True)
         
-        self.last_linear = nn.Linear(in_features=self.hidden_size*2,
-                                     out_features=self.f_size)
+        self.last_linear = nn.Linear(in_features=self.hidden_size*2, out_features=self.f_size)
     
         
     def _encoder(self, channels, kernel_size, stride, dilation=1):
@@ -83,9 +101,12 @@ class FeatExtractorBlstm_pp_v2(nn.Module):
         xin = xin.unsqueeze(1)
         ex1_xin = ex1_xin.unsqueeze(1)
         ex2_xin = ex2_xin.unsqueeze(1)
-        encoder_in = torch.cat((xin, ex1_xin, ex2_xin), axis=1)
-        encoder_out = self.encoder(self._stride_pad(encoder_in, self.stride))
-        mix_encoder_out = self.mix_encoder(self._stride_pad(encoder_out, self.mix_stride))
+        
+        encoder_out = self.encoder(self._stride_pad(xin, self.stride))
+        ex1_encoder_out = self.ex1_encoder(self._stride_pad(ex1_xin, self.ex1_stride))
+        ex2_encoder_out = self.ex2_encoder(self._stride_pad(ex2_xin, self.ex2_stride))
+        mix_encoder_in = torch.cat((encoder_out, ex1_encoder_out, ex2_encoder_out, xin, ex1_xin, ex2_xin), axis=1)
+        mix_encoder_out = self.mix_encoder(self._stride_pad(mix_encoder_in, self.mix_stride))
         compressor_out = self.compressor(mix_encoder_out)
         compressor_out = compressor_out.squeeze(1)#(batch, F, T)
         compressor_out = compressor_out.permute(0,2,1)
@@ -112,7 +133,7 @@ if __name__ == '__main__':
                           'mix_channel': (30, 60),
                           'hidden_size': 400}}
 
-    model = FeatExtractorBlstm_pp(dnn_cfg['dnn_cfg'])
+    model = FeatExtractorBlstm_pp_v3(dnn_cfg['dnn_cfg'])
     params = 0
     for p in model.parameters():
         if p.requires_grad:

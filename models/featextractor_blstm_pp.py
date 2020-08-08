@@ -31,20 +31,23 @@ class FeatExtractorBlstm_pp(nn.Module):
         self.hidden_size = cfg['hidden_size']
         self.leakiness = 0.2
         
-        self.encoder = self._encoder(channels=self.channel, 
-                                     kernel_size=self.kernel, 
-                                     stride=self.stride, 
-                                     dilation=self.dilation)
+        self.encoder = nn.Sequential(nn.BatchNorm2d(1),
+                                     self._encoder(channels=self.channel, 
+                                                   kernel_size=self.kernel, 
+                                                   stride=self.stride, 
+                                                   dilation=self.dilation))
         
-        self.ex1_encoder = self._encoder(channels=self.ex1_channel, 
-                                         kernel_size=self.ex1_kernel, 
-                                         stride=self.ex1_stride, 
-                                         dilation=self.ex1_dilation)
+        self.ex1_encoder = nn.Sequential(nn.BatchNorm2d(1),
+                                         self._encoder(channels=self.ex1_channel, 
+                                                       kernel_size=self.ex1_kernel, 
+                                                       stride=self.ex1_stride, 
+                                                       dilation=self.ex1_dilation))
         
-        self.ex2_encoder = self._encoder(channels=self.ex2_channel,
-                                         kernel_size=self.ex2_kernel, 
-                                         stride=self.ex2_stride, 
-                                         dilation=self.ex2_dilation)
+        self.ex2_encoder = nn.Sequential(nn.BatchNorm2d(1),
+                                         self._encoder(channels=self.ex2_channel,
+                                                       kernel_size=self.ex2_kernel, 
+                                                       stride=self.ex2_stride, 
+                                                       dilation=self.ex2_dilation))
         
         self.mix_encoder = self._encoder(channels=self.mix_channel,
                                          kernel_size=self.mix_kernel, 

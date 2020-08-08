@@ -21,11 +21,11 @@ class FeatExtractorBlstm(nn.Module):
         self.first_linear_out = cfg['first_linear_out']
         self.leakiness = 0.2
         
-        self.bathc_norm = nn.BatchNorm2d(1)
-        self.encoder = self._encoder(channels=self.channel, 
-                                     kernel_size=self.kernel, 
-                                     stride=self.stride, 
-                                     dilation=self.dilation)
+        self.encoder = nn.Sequential(nn.BatchNorm2d(1),
+                                     self._encoder(channels=self.channel, 
+                                                   kernel_size=self.kernel, 
+                                                   stride=self.stride, 
+                                                   dilation=self.dilation))
         
         self.mix_encoder = self._encoder(channels=self.mix_channel, 
                                          kernel_size=self.mix_kernel, 
@@ -38,8 +38,9 @@ class FeatExtractorBlstm(nn.Module):
         
         first_linear_in = int(np.ceil(np.ceil(self.f_size/self.stride[0])/self.mix_stride[0]))
         
-        self.first_linear = nn.Linear(in_features=first_linear_in, 
-                                      out_features=self.first_linear_out)
+        self.first_linear = nn.Sequential(nn.Linear(in_features=first_linear_in, 
+                                                    out_features=self.first_linear_out),
+                                          nn.LeakyReLU(self.leakiness))
         
         self.blstm_block = nn.LSTM(input_size=self.first_linear_out,
                                    hidden_size=self.hidden_size,
@@ -76,8 +77,6 @@ class FeatExtractorBlstm(nn.Module):
         return [((i + (i-1)*(dilation - 1) - 1) // 2) for i in kernel_size]
     
     def forward(self,xin):
-        batch, freq, time = xin.shape
-       
         xin = xin.unsqueeze(1)
      
         encoder_out = self.encoder(self._stride_pad(xin, self.stride))
