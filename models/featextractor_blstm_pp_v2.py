@@ -21,7 +21,7 @@ class FeatExtractorBlstm_pp_v2(nn.Module):
         self.hidden_size = cfg['hidden_size']
         self.leakiness=0.2
         
-        self.encoder = nn.Sequential(nn.BatchNorm2d(1),
+        self.encoder = nn.Sequential(nn.BatchNorm2d(3),
                                      self._encoder(channels=self.channel, 
                                                    kernel_size=self.kernel, 
                                                    stride=self.stride, 
