@@ -77,10 +77,10 @@ class DSD100Dataset(torch.utils.data.Dataset):
         other, _ = torchaudio.load(other_path)
         vocals, _ = torchaudio.load(vocals_path)
         
-        bass = bass.squeeze(0).to(self.dtype)
-        drums = drums.squeeze(0).to(self.dtype)
-        other = other.squeeze(0).to(self.dtype)
-        vocals = vocals.squeeze(0).to(self.dtype)
+        bass = bass.squeeze(0).to(self.dtype).to(self.device)
+        drums = drums.squeeze(0).to(self.dtype).to(self.device)
+        other = other.squeeze(0).to(self.dtype).to(self.device)
+        vocals = vocals.squeeze(0).to(self.dtype).to(self.device)
         
         if self.folder_type == 'Dev':
             if self.augmentation:

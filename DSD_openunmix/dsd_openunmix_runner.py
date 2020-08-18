@@ -41,7 +41,7 @@ class DSDOpenUnmixRunner():
         
         self.valid_dataset =DSD100Dataset(data_num=self.valid_data_num, 
                                           sample_len=self.sample_len, 
-                                          folder_type='validation',
+                                          folder_type='Validation',
                                           shuffle=True,
                                           device=self.device,
                                           augmentation=False)
