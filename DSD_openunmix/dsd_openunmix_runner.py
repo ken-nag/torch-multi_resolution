@@ -33,6 +33,7 @@ class DSDOpenUnmixRunner():
         self.valid_full_data_num = cfg['valid_full_data_num']
         
         self.train_dataset = DSD100Dataset(data_num=self.train_data_num, 
+                                           full_data_num=self.train_full_data_num,
                                            sample_len=self.sample_len, 
                                            folder_type='Dev',
                                            shuffle=True,
@@ -40,6 +41,7 @@ class DSDOpenUnmixRunner():
                                            augmentation=True)
         
         self.valid_dataset =DSD100Dataset(data_num=self.valid_data_num, 
+                                          full_data_num=self.valid_full_data_num,
                                           sample_len=self.sample_len, 
                                           folder_type='Validation',
                                           shuffle=True,
