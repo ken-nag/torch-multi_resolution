@@ -5,13 +5,25 @@ import random
 import torchaudio
 
 class DSD100Dataset(torch.utils.data.Dataset):
-    def __init__(self, data_num, sample_len=None, transform=None, folder_type=None, shuffle=True, device=None, augmentation=None):
+    def __init__(self, data_num, full_data_num=None, sample_len=None, transform=None, folder_type=None, shuffle=True, device=None, augmentation=None):
         self.data_num = data_num
         self.dtype= torch.float32
-        self.audio_folder_path = glob.glob('../data/DSD_Dsampled/Sources/{0}/*'.format(folder_type))
+        self.full_data_num = full_data_num
+        self.folder_type = folder_type
+        
+        if self.folder_type == 'Test':
+            self.audio_folder_path = glob.glob('../data/DSD_Dsampled/Sources/Test/*')
+            
+        if self.folder_type=='Dev':
+            audio_folder_path = glob.glob('../data/DSD_Dsampled/Sources/Dev/*')
+            self.audio_folder_path = audio_folder_path[:self.full_data_num]
+        
+        if self.folder_type=='Validation':
+            audio_folder_path = glob.glob('../data/DSD_Dsampled/Sources/Dev/*')
+            self.audio_folder_path = audio_folder_path[-self.full_data_num:]
+            
         self.sample_len = sample_len
         self.shuffle = shuffle
-        self.folder_type = folder_type
         self.device = device
         self.augmentation = augmentation
         
@@ -39,13 +51,20 @@ class DSD100Dataset(torch.utils.data.Dataset):
         return self._random_scaling(chunked)
             
     def __getitem__(self, idx):
-        if self.folder_type == 'Dev':
-            #random mixiking
-            paths = random.sample(self.audio_folder_path, 4)
-            bass_path, _ = paths[0] + '/bass.wav'
-            drums_path = paths[1] + '/drums.wav'
-            other_path = paths[2] + '/other.wav'
-            vocals_path = paths[3] + '/vocals.wav'
+        if (self.folder_type == 'Dev') or (self.folder_type == 'Validation'):
+            if self.augmentation:
+                paths = random.sample(self.audio_folder_path, 4)
+                bass_path = paths[0] + '/bass.wav'
+                drums_path = paths[1] + '/drums.wav'
+                other_path = paths[2] + '/other.wav'
+                vocals_path = paths[3] + '/vocals.wav'
+            else:
+                path = self.audio_folder_path[idx]      
+                bass_path, _ = path + '/bass.wav'
+                drums_path, _ = path + '/drums.wav'
+                other_path, _ = path + '/other.wav'
+                vocals_path, _ = path + '/vocals.wav'
+                    
         elif self.folder_type == 'Test':
             path = self.audio_folder_path[idx]      
             bass_path, _ = path + '/bass.wav'
