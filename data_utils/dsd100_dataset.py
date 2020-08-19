@@ -82,7 +82,7 @@ class DSD100Dataset(torch.utils.data.Dataset):
         other = other.squeeze(0).to(self.dtype).to(self.device)
         vocals = vocals.squeeze(0).to(self.dtype).to(self.device)
         
-        if self.folder_type == 'Dev':
+        if (self.folder_type == 'Dev') or (self.folder_type == 'Validation'):
             if self.augmentation:
                 bass = self._augmentation(bass)
                 drums = self._augmentation(drums)
