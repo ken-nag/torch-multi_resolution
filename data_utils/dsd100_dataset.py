@@ -60,17 +60,17 @@ class DSD100Dataset(torch.utils.data.Dataset):
                 vocals_path = paths[3] + '/vocals.wav'
             else:
                 path = self.audio_folder_path[idx]      
-                bass_path, _ = path + '/bass.wav'
-                drums_path, _ = path + '/drums.wav'
-                other_path, _ = path + '/other.wav'
-                vocals_path, _ = path + '/vocals.wav'
+                bass_path = path + '/bass.wav'
+                drums_path = path + '/drums.wav'
+                other_path = path + '/other.wav'
+                vocals_path = path + '/vocals.wav'
                     
         elif self.folder_type == 'Test':
             path = self.audio_folder_path[idx]      
-            bass_path, _ = path + '/bass.wav'
-            drums_path, _ = path + '/drums.wav'
-            other_path, _ = path + '/other.wav'
-            vocals_path, _ = path + '/vocals.wav'
+            bass_path = path + '/bass.wav'
+            drums_path = path + '/drums.wav'
+            other_path = path + '/other.wav'
+            vocals_path = path + '/vocals.wav'
                 
         bass, _ = torchaudio.load(bass_path)
         drums, _ = torchaudio.load(drums_path)
