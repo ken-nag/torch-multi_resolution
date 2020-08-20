@@ -69,7 +69,7 @@ class DSDOpenUnmixTester():
                 clean = clean.squeeze(0)
                 noisy = noisy.squeeze(0)
                                 
-                sdr, sir, sar, si_sdr, si_sdr_improve = mss_evals(est_wave, clean, noisy, fs=16000)
+                sdr, sir, sar, si_sdr, si_sdr_improve = mss_evals(est_wave, clean, noisy)
                 self.sdr_list = np.append(self.sdr_list, sdr)
                 self.sir_list = np.append(self.sir_list, sir)
                 self.sar_list = np.append(self.sar_list, sar)
