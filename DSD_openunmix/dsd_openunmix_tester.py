@@ -54,7 +54,7 @@ class DSDOpenUnmixTester():
             
     def test(self, mode='test'):
         with torch.no_grad():
-            for i, i, (noisy, _, _, _, clean) in enumerate(self.test_data_loader):
+            for i, (noisy, _, _, _, clean) in enumerate(self.test_data_loader):
                 start = time.time()
                 noisy = noisy.to(self.dtype).to(self.device)
                 clean = clean.to(self.dtype).to(self.device)
