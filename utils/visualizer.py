@@ -8,10 +8,10 @@ def show_TF_domein_result(train_loss, valid_loss, mixture, mask, estimate, true,
     estimate = estimate.detach().clone().cpu().numpy()
     true = true.detach().clone().cpu().numpy()
     
-    vmax = 20*np.log10(np.max(mixture))-10
+    vmax = 20*np.log10(np.max(mixture+1e-8))-10
     vmin += vmax
     
-    mask_max = 20*np.log10(np.max(mask))-10
+    mask_max = 20*np.log10(np.max(mask+1e-8))-10
     mask_min = mask_max - 60
     
     fig, axes = plt.subplots(2,3, figsize=(12,8))

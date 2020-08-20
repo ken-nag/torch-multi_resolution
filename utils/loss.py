@@ -25,8 +25,8 @@ class T_MAE():
 class Clip_SDR():
     def _cal_sdr(self, est_wave, true_wave):
         noise = est_wave - true_wave
-        p_noise = noise.pow(2).sum(-1)
-        p_true = true_wave.pow(2).sum(-1)
+        p_noise = noise.pow(2).sum(-1) + 1e-8
+        p_true = true_wave.pow(2).sum(-1) + 1e-8
         sdr = 10*torch.log10(p_true/p_noise)
         return sdr
     
