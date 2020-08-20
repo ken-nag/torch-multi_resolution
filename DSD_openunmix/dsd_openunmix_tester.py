@@ -6,7 +6,7 @@ from models.dsd_oepnunmix import OpenUnmix
 from data_utils.dsd100_dataset import DSD100Dataset
 from data_utils.data_loader import FastDataLoader
 from utils.stft_module import STFTModule
-from utils.evaluation import sp_enhance_evals
+from utils.evaluation import mss_evals
 import torchaudio.functional as taF
 import numpy as np
 from IPython import get_ipython
@@ -38,8 +38,9 @@ class DSDOpenUnmixTester():
         
         self.test_data_loader =  FastDataLoader(self.test_dataset, batch_size=self.test_batch_size, shuffle=False)
         
-        self.stoi_list = np.array([])
-        self.pesq_list = np.array([])
+        self.sdr_list = np.array([])
+        self.sir_list = np.array([])
+        self.sar_list = np.array([])
         self.si_sdr_list = np.array([])
         self.si_sdr_improve_list = np.array([])
     
@@ -68,22 +69,20 @@ class DSDOpenUnmixTester():
                 clean = clean.squeeze(0)
                 noisy = noisy.squeeze(0)
                                 
-                pesq_val, stoi_val, si_sdr_val, si_sdr_improve = sp_enhance_evals(est_wave, clean, noisy, fs=16000)
-                self.pesq_list = np.append(self.pesq_list, pesq_val)
-                self.stoi_list = np.append(self.stoi_list, stoi_val)
-                self.si_sdr_list = np.append(self.si_sdr_list, si_sdr_val)
+                sdr, sir, sar, si_sdr, si_sdr_improve = mss_evals(est_wave, clean, noisy, fs=16000)
+                self.sdr_list = np.append(self.sdr_list, sdr)
+                self.sir_list = np.append(self.sir_list, sir)
+                self.sar_list = np.append(self.sar_list, sar)
+                self.si_sdr_list = np.append(self.si_sdr_list, si_sdr)
                 self.si_sdr_improve_list = np.append(self.si_sdr_improve_list, si_sdr_improve)
                 print('test time:', time.time() - start)
                 
-            print('pesq mean:', np.mean(self.pesq_list))
-            print('stoi mean:', np.mean(self.stoi_list))
+            print('sdr mean:', np.mean(self.sdr_list))
+            print('sir mean:', np.mean(self.sir_list))
+            print('sar mean:', np.mean(self.sar_list))
             print('si-sdr mean:', np.mean(self.si_sdr_list))
             print('sdr improve mean:', np.mean(self.si_sdr_improve_list))
-            
-            print('pesq median:', np.median(self.pesq_list))
-            print('stoi median:', np.median(self.stoi_list))
-            print('si-sder median:', np.median(self.si_sdr_list))
-        
+                    
 
 if __name__ == '__main__':
     from configs.dsd_openunmix_config_1 import test_cfg
