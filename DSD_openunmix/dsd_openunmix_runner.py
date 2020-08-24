@@ -5,7 +5,7 @@ sys.path.append('../')
 from models.dsd_oepnunmix import OpenUnmix
 from data_utils.dsd100_dataset import DSD100Dataset
 from data_utils.data_loader import FastDataLoader
-from utils.loss import Clip_SDR
+from utils.loss import MSE
 from utils.visualizer import show_TF_domein_result
 import numpy as np
 from utils.stft_module import STFTModule
@@ -57,7 +57,7 @@ class DSDOpenUnmixRunner():
                                                 shuffle=True)
         
         self.model = OpenUnmix(cfg['dnn_cfg']).to(self.device)
-        self.criterion = Clip_SDR()
+        self.criterion = MSE()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
         self.save_path = cfg['save_path']
         self.early_stopping = EarlyStopping(patience=10)
@@ -84,7 +84,7 @@ class DSDOpenUnmixRunner():
             est_source = noisy_spec * est_mask[...,None]
             
             if mode == 'train' or mode == 'validation':
-                loss = self.criterion(est_source, clean_spec, self.stft_module)
+                loss = self.criterion(est_source, clean_spec)
                 running_loss += loss.data
                 if mode == 'train':
                     loss.backward()
