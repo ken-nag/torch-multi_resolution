@@ -53,8 +53,7 @@ class DSD100Dataset(torch.utils.data.Dataset):
                 drums_path = random.sample(self.drums_folder_path, 1)[-1]
                 other_path = random.sample(self.other_folder_path, 1)[-1]
                 vocals_path = random.sample(self.vocals_folder_path, 1)[-1]
-            else:
-                path = self.audio_folder_path[idx]    
+            else:   
                 bass_path = self.bass_folder_path[idx]
                 drums_path = self.drums_folder_path[idx]
                 other_path = self.other_folder_path[idx]
