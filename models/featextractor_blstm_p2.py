@@ -65,7 +65,8 @@ class FeatExtractorBlstm_p2(nn.Module):
         xin = xin.unsqueeze(1)
         ex2_xin = ex2_xin.unsqueeze(1)
         
-        encoder_out = self.encoder(self._stride_pad(xin, self.stride))
+        encoder_in = torch.cat((xin, ex2_xin), axis=1)
+        encoder_out = self.encoder(self._stride_pad(encoder_in, self.stride))
         mix_encoder_out = self.mix_encoder(self._stride_pad(encoder_out, self.mix_stride))
         compressor_out = self.compressor(mix_encoder_out)
         compressor_out = compressor_out.squeeze(1)#(batch, F, T)
