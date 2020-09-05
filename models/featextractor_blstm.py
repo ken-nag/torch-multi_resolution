@@ -21,11 +21,10 @@ class FeatExtractorBlstm(nn.Module):
         self.first_linear_out = cfg['first_linear_out']
         self.leakiness = 0.2
         
-        self.encoder = nn.Sequential(nn.BatchNorm2d(1),
-                                     self._encoder(channels=self.channel, 
-                                                   kernel_size=self.kernel, 
-                                                   stride=self.stride, 
-                                                   dilation=self.dilation))
+        self.encoder = self._encoder(channels=self.channel, 
+                                     kernel_size=self.kernel, 
+                                     stride=self.stride, 
+                                     dilation=self.dilation)
         
         self.mix_encoder = self._encoder(channels=self.mix_channel, 
                                          kernel_size=self.mix_kernel, 

@@ -25,10 +25,6 @@ class FeatExtractorBlstm_p1(nn.Module):
                                      kernel_size=self.kernel, 
                                      stride=self.stride)
         
-        self.ex1_encoder = self._encoder(channels=self.ex1_channel, 
-                                         kernel_size=self.ex1_kernel, 
-                                         stride=self.ex1_stride)
-        
         self.mix_encoder = self._encoder(channels=self.mix_channel, 
                                          kernel_size=self.mix_kernel, 
                                          stride=self.mix_stride)
@@ -80,9 +76,7 @@ class FeatExtractorBlstm_p1(nn.Module):
         ex1_xin = ex1_xin.unsqueeze(1)
         
         encoder_out = self.encoder(self._stride_pad(xin, self.stride))
-        ex1_encoder_out = self.ex1_encoder(self._stride_pad(ex1_xin, self.ex1_stride))
-        mix_encoder_in = torch.cat((encoder_out, ex1_encoder_out), axis=1)
-        mix_encoder_out = self.mix_encoder(self._stride_pad(mix_encoder_in, self.mix_stride))
+        mix_encoder_out = self.mix_encoder(self._stride_pad(encoder_out, self.mix_stride))
         compressor_out = self.compressor(mix_encoder_out)
         compressor_out = compressor_out.squeeze(1)#(batch, T, F)
         compressor_out = compressor_out.permute(0,2,1)
