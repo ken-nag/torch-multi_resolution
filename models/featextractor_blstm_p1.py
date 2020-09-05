@@ -10,10 +10,6 @@ class FeatExtractorBlstm_p1(nn.Module):
         self.kernel = cfg['kernel']
         self.stride = cfg['stride']
         self.channel = cfg['channel']
-
-        self.ex1_kernel=cfg['ex1_kernel']
-        self.ex1_stride=cfg['ex1_stride']
-        self.ex1_channel=cfg['ex1_channel'] 
         
         self.mix_kernel=cfg['mix_kernel']
         self.mix_stride=cfg['mix_stride']
