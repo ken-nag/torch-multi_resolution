@@ -5,7 +5,7 @@ sys.path.append('../')
 from models.demand_u_net_p1 import DemandUNet_p1
 from data_utils.voice_demand_dataset import VoicebankDemandDataset
 from data_utils.data_loader import FastDataLoader
-from utils.loss import PSA
+from utils.loss import Clip_SDR
 from utils.visualizer import show_TF_domein_result
 import numpy as np
 from utils.stft_module import STFTModule
