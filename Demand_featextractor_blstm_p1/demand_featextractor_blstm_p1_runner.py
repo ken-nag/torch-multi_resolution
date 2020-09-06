@@ -2,7 +2,7 @@ import torch
 import sys
 import time
 sys.path.append('../')
-from models.demand_cnn_oepnunmix_p1 import CNNOpenUnmix_p1
+from models.featextractor_blstm_p1 import FeatExtractorBlstm_p1
 from data_utils.voice_demand_dataset import VoicebankDemandDataset
 from data_utils.data_loader import FastDataLoader
 from utils.loss import Clip_SDR
@@ -61,7 +61,7 @@ class FeatExtractorBlstm_p1_Runner():
                                                 batch_size=self.valid_batch_size, 
                                                 shuffle=True)
       
-        self.model = CNNOpenUnmix_p1(cfg['dnn_cfg']).to(self.device)
+        self.model = FeatExtractorBlstm_p1(cfg['dnn_cfg']).to(self.device)
         self.criterion = Clip_SDR()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
         self.early_stopping = EarlyStopping(patience=10)
@@ -79,7 +79,7 @@ class FeatExtractorBlstm_p1_Runner():
             ex1_noisy_spec = self.stft_module_ex1.stft(noisy, pad=False)
             ex1_noisy_amp_spec = taF.complex_norm(ex1_noisy_spec)
             ex1_noisy_mag_spec = self.stft_module_ex1.to_normalize_mag(ex1_noisy_amp_spec)
-            
+
             return noisy_mag_spec, ex1_noisy_mag_spec, clean_amp_spec, noisy_amp_spec, noisy_spec, clean_spec
         
     def _run(self, mode=None, data_loader=None):
@@ -138,6 +138,6 @@ class FeatExtractorBlstm_p1_Runner():
            
                         
 if __name__ == '__main__':
-    from configs.demand_cnn_openunmix_p1_config_2 import train_cfg
+    from configs.demand_featextractor_blstm_pp_config_2 import train_cfg
     obj = FeatExtractorBlstm_p1_Runner(train_cfg)
     obj.train()
