@@ -40,12 +40,14 @@ class FeatExtractorBlstm_p2_Runner():
         self.train_dataset = VoicebankDemandDataset(data_num=self.train_data_num, 
                                                     full_data_num=self.train_full_data_num,
                                                     sample_len=self.sample_len, 
-                                                    folder_type='train')
+                                                    folder_type='train',
+                                                    augmentation=True)
         
         self.valid_dataset = VoicebankDemandDataset(data_num=self.valid_data_num, 
                                                     full_data_num=self.valid_full_data_num,
                                                     sample_len=self.sample_len, 
-                                                    folder_type='validation')
+                                                    folder_type='validation',
+                                                    augmentation=False)
         
         self.train_data_loader = FastDataLoader(self.train_dataset, 
                                                 batch_size=self.train_batch_size, 
@@ -68,7 +70,7 @@ class FeatExtractorBlstm_p2_Runner():
             
             clean_spec = self.stft_module.stft(clean, pad=False)
             clean_amp_spec = taF.complex_norm(clean_spec)
-            
+
             #ex2
             ex2_noisy_spec = self.stft_module_ex2.stft(noisy, pad=False)
             ex2_noisy_amp_spec = taF.complex_norm(ex2_noisy_spec)
