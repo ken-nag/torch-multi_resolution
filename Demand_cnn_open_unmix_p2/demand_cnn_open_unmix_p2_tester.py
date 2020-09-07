@@ -24,7 +24,6 @@ class DemandCNNOpenUnmix_p2_Tester():
         self.model.load_state_dict(torch.load(self.eval_path, map_location=self.device))
         
         self.stft_module = STFTModule(cfg['stft_params'], self.device)
-        self.stft_module_ex1 = STFTModule(cfg['stft_params_ex1'], self.device)
         self.stft_module_ex2 = STFTModule(cfg['stft_params_ex2'], self.device)
         
         self.test_data_num = cfg['test_data_num']
@@ -86,6 +85,6 @@ class DemandCNNOpenUnmix_p2_Tester():
         
 
 if __name__ == '__main__':
-    from configs.demand_cnn_openunmix_p2_config_1 import test_cfg
+    from configs.demand_cnn_open_unmix_p2_config_1 import test_cfg
     obj = DemandCNNOpenUnmix_p2_Tester(test_cfg)
     obj.test()

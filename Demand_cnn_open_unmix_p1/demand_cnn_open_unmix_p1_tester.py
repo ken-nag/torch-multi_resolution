@@ -25,8 +25,7 @@ class DemandCNNOpenUnmix_p1_Tester():
         
         self.stft_module = STFTModule(cfg['stft_params'], self.device)
         self.stft_module_ex1 = STFTModule(cfg['stft_params_ex1'], self.device)
-        self.stft_module_ex2 = STFTModule(cfg['stft_params_ex2'], self.device)
-        
+
         self.test_data_num = cfg['test_data_num']
         self.test_batch_size = cfg['test_batch_size']
         self.sample_len = cfg['sample_len']
@@ -87,6 +86,6 @@ class DemandCNNOpenUnmix_p1_Tester():
         
 
 if __name__ == '__main__':
-    from configs.demand_cnn_openunmix_p1_config_1 import test_cfg
+    from configs.demand_cnn_open_unmix_p1_config_1 import test_cfg
     obj = DemandCNNOpenUnmix_p1_Tester(test_cfg)
     obj.test()
