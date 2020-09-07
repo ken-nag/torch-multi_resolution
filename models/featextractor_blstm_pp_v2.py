@@ -23,9 +23,9 @@ class FeatExtractorBlstm_pp_v2(nn.Module):
         
         
         self.encoder = nn.Sequential(self._encoder(channels=self.channel, 
-                                     kernel_size=self.kernel, 
-                                     stride=self.stride, 
-                                     dilation=self.dilation))
+                                                   kernel_size=self.kernel, 
+                                                   stride=self.stride, 
+                                                   dilation=self.dilation))
         
         self.mix_encoder = self._encoder(channels=self.mix_channel, 
                                          kernel_size=self.mix_kernel, 
